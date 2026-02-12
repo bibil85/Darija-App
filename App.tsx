@@ -1,13 +1,13 @@
 
 import React, { useState, useMemo } from 'react';
-import { Layout } from './components/Layout';
-import { Flashcard } from './components/Flashcard';
-import { MatchingGame } from './components/MatchingGame';
-import { DiscoveryGame } from './components/DiscoveryGame';
-import { NamingGame } from './components/NamingGame';
-import { CATEGORIES, INITIAL_WORDS } from './constants';
-import { CategoryType, AppView } from './types';
-import { playClickSound } from './services/soundService';
+import { Layout } from './components/Layout.tsx';
+import { Flashcard } from './components/Flashcard.tsx';
+import { MatchingGame } from './components/MatchingGame.tsx';
+import { DiscoveryGame } from './components/DiscoveryGame.tsx';
+import { NamingGame } from './components/NamingGame.tsx';
+import { CATEGORIES, INITIAL_WORDS } from './constants.ts';
+import { CategoryType, AppView } from './types.ts';
+import { playClickSound } from './services/soundService.ts';
 
 const App: React.FC = () => {
   const [view, setView] = useState<AppView>('home');
