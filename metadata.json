@@ -1,0 +1,7 @@
+{
+  "name": "Darija Toddler: Fun Moroccan Arabic",
+  "description": "An interactive, colorful educational app designed specifically for toddlers to learn Moroccan Darija through visuals and authentic audio feedback.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
