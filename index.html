@@ -6,7 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
   <title>Darija Toddler</title>
   
-  <!-- iOS PWA Meta Tags -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Darija Fun">
@@ -15,8 +14,8 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@400;700&display=swap" rel="stylesheet">
   
-  <!-- Shim for process.env (Required for browser-side Gemini SDK) -->
   <script>
+    // Essential shim for browser environments
     window.process = {
       env: {
         API_KEY: "" 
@@ -35,48 +34,22 @@
       font-family: 'Quicksand', sans-serif;
       overflow: hidden;
       background-color: #FFF9E6;
-      position: fixed;
-      width: 100%;
-      height: 100%;
       margin: 0;
       padding: 0;
+      -webkit-tap-highlight-color: transparent;
     }
-    .font-kids {
-      font-family: 'Fredoka One', cursive;
-    }
-    .bounce-subtle {
-      animation: bounce 2s infinite;
-    }
-    @keyframes bounce {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
-    }
-    @keyframes sparkle {
-      0% { transform: scale(0) rotate(0deg); opacity: 0; }
-      50% { transform: scale(1.5) rotate(180deg); opacity: 1; }
-      100% { transform: scale(0) rotate(360deg); opacity: 0; }
-    }
-    .animate-sparkle {
-      animation: sparkle 0.8s ease-out forwards;
-    }
-    @keyframes pop-in {
-      0% { transform: scale(0.8); opacity: 0; }
-      70% { transform: scale(1.15); }
-      100% { transform: scale(1); opacity: 1; }
-    }
-    .animate-pop {
-      animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-    }
-    @keyframes wiggle {
-      0%, 100% { transform: rotate(-3deg); }
-      50% { transform: rotate(3deg); }
-    }
-    .hover-wiggle:hover {
-      animation: wiggle 0.4s ease-in-out infinite;
-    }
+    .font-kids { font-family: 'Fredoka One', cursive; }
+    @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+    .bounce-subtle { animation: bounce 2s infinite; }
+    @keyframes sparkle { 0% { transform: scale(0); opacity: 0; } 50% { transform: scale(1.5); opacity: 1; } 100% { transform: scale(0); opacity: 0; } }
+    .animate-sparkle { animation: sparkle 0.8s ease-out forwards; }
+    @keyframes pop-in { 0% { transform: scale(0.8); opacity: 0; } 70% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+    .animate-pop { animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+    @keyframes wiggle { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(2deg); } }
+    .hover-wiggle:hover { animation: wiggle 0.3s ease-in-out infinite; }
   </style>
 
-<script type="importmap">
+  <script type="importmap">
 {
   "imports": {
     "react": "https://esm.sh/react@19",
@@ -89,13 +62,20 @@
 }
 </script>
 </head>
-<body>
-  <div id="root"></div>
+<body class="bg-amber-50">
+  <div id="root">
+    <div class="h-screen w-full flex items-center justify-center bg-amber-50">
+      <div class="text-center">
+        <div class="text-6xl mb-4 bounce-subtle">🦁</div>
+        <p class="font-kids text-amber-600 text-xl">Loading Darija Fun...</p>
+      </div>
+    </div>
+  </div>
   
-  <!-- Use run-tsx to transpile TSX in-browser without a build step -->
   <script type="module">
     import "https://esm.sh/run-tsx";
   </script>
+  
   <script type="text/tsx" src="index.tsx"></script>
 
   <script>
