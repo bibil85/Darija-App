@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'darija-v1';
+const CACHE_NAME = 'darija-v2';
 const ASSETS = [
   '/',
   '/index.html',
