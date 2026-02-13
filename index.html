@@ -73,17 +73,10 @@
   </div>
   
   <script type="module">
+    // Using run-tsx to directly execute TSX files in the browser
     import "https://esm.sh/run-tsx";
   </script>
   
   <script type="text/tsx" src="index.tsx"></script>
-
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed:', err));
-      });
-    }
-  </script>
 </body>
 </html>

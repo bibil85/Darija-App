@@ -1,13 +1,13 @@
 
 import React, { useState, useMemo } from 'react';
-import { Layout } from './components/Layout.tsx';
-import { Flashcard } from './components/Flashcard.tsx';
-import { MatchingGame } from './components/MatchingGame.tsx';
-import { DiscoveryGame } from './components/DiscoveryGame.tsx';
-import { NamingGame } from './components/NamingGame.tsx';
-import { CATEGORIES, INITIAL_WORDS } from './constants.ts';
-import { CategoryType, AppView } from './types.ts';
-import { playClickSound } from './services/soundService.ts';
+import { Layout } from './components/Layout';
+import { Flashcard } from './components/Flashcard';
+import { MatchingGame } from './components/MatchingGame';
+import { DiscoveryGame } from './components/DiscoveryGame';
+import { NamingGame } from './components/NamingGame';
+import { CATEGORIES, INITIAL_WORDS } from './constants';
+import { CategoryType, AppView } from './types';
+import { playClickSound } from './services/soundService';
 
 const App: React.FC = () => {
   const [view, setView] = useState<AppView>('home');
@@ -58,7 +58,6 @@ const App: React.FC = () => {
           </div>
           
           <div className="flex flex-col gap-6">
-            {/* SCHOOL SECTION */}
             <div className="space-y-4">
               <h3 className="text-sm font-bold uppercase tracking-widest text-gray-400 px-2">School 📚</h3>
               <div className="grid grid-cols-2 gap-3">
@@ -68,14 +67,13 @@ const App: React.FC = () => {
                     onClick={() => handleCategorySelect(cat.id)}
                     className={`${cat.color} p-4 rounded-3xl shadow-lg transform transition-all hover:scale-110 hover:shadow-2xl hover-wiggle active:scale-95 flex flex-col items-center justify-center gap-2 border-b-8 border-black border-opacity-10`}
                   >
-                    <span className="text-4xl transition-transform duration-300 transform group-hover:scale-125">{cat.icon}</span>
+                    <span className="text-4xl">{cat.icon}</span>
                     <span className="text-white font-kids text-sm">{cat.label}</span>
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* PLAYGROUND SECTION */}
             <div className="space-y-4">
               <h3 className="text-sm font-bold uppercase tracking-widest text-gray-400 px-2">Playground 🎡</h3>
               <div className="grid gap-4">
@@ -87,7 +85,7 @@ const App: React.FC = () => {
                     <span className="text-white font-kids text-2xl block">Pairs Match</span>
                     <span className="text-green-800 font-bold text-xs uppercase">Find the 2 same things!</span>
                   </div>
-                  <span className="text-5xl group-hover:scale-125 transition-transform duration-300">🧩</span>
+                  <span className="text-5xl transition-transform duration-300 group-hover:scale-125">🧩</span>
                 </button>
 
                 <button
@@ -98,7 +96,7 @@ const App: React.FC = () => {
                     <span className="text-white font-kids text-2xl block">Listen & Find</span>
                     <span className="text-indigo-800 font-bold text-xs uppercase">Where is the sound?</span>
                   </div>
-                  <span className="text-5xl group-hover:scale-125 transition-transform duration-300">👂</span>
+                  <span className="text-5xl transition-transform duration-300 group-hover:scale-125">👂</span>
                 </button>
 
                 <button
@@ -109,7 +107,7 @@ const App: React.FC = () => {
                     <span className="text-white font-kids text-2xl block">What's the Word?</span>
                     <span className="text-rose-800 font-bold text-xs uppercase">Tap the name!</span>
                   </div>
-                  <span className="text-5xl group-hover:scale-125 transition-transform duration-300">🧸</span>
+                  <span className="text-5xl transition-transform duration-300 group-hover:scale-125">🧸</span>
                 </button>
               </div>
             </div>
