@@ -1,10 +1,20 @@
 
 import { GoogleGenAI, Modality } from "@google/genai";
 
-// Always use process.env.API_KEY directly for initialization as per guidelines
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const getAI = () => {
+  // Safe check for the API key in a browser environment
+  const apiKey = (window as any).process?.env?.API_KEY || "";
+  if (!apiKey) {
+    console.warn("Gemini API Key is missing. Audio features will not work.");
+    return null;
+  }
+  return new GoogleGenAI({ apiKey });
+};
 
 export async function generateDarijaAudio(text: string): Promise<string | null> {
+  const ai = getAI();
+  if (!ai) return null;
+
   try {
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash-preview-tts",
@@ -13,7 +23,7 @@ export async function generateDarijaAudio(text: string): Promise<string | null> 
         responseModalities: [Modality.AUDIO],
         speechConfig: {
           voiceConfig: {
-            prebuiltVoiceConfig: { voiceName: 'Kore' }, // Kore has a warm tone
+            prebuiltVoiceConfig: { voiceName: 'Kore' },
           },
         },
       },
@@ -27,7 +37,6 @@ export async function generateDarijaAudio(text: string): Promise<string | null> 
   }
 }
 
-// Utility to decode and play PCM
 export async function playPCM(base64: string) {
   const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
   
