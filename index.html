@@ -21,6 +21,19 @@
         API_KEY: "" 
       }
     };
+
+    // Catch errors during boot and show them on screen
+    window.onerror = function(msg, url, line) {
+      const root = document.getElementById('root');
+      if (root) {
+        root.innerHTML = `<div style="padding: 20px; color: red; font-family: sans-serif;">
+          <h2>App Error</h2>
+          <p>${msg}</p>
+          <small>${url} (line ${line})</small>
+        </div>`;
+      }
+      return false;
+    };
   </script>
 
   <style>
@@ -52,9 +65,9 @@
   <script type="importmap">
 {
   "imports": {
-    "react": "https://esm.sh/react@19",
-    "react-dom": "https://esm.sh/react-dom@19",
-    "react-dom/client": "https://esm.sh/react-dom@19/client",
+    "react": "https://esm.sh/react@19?bundle",
+    "react-dom": "https://esm.sh/react-dom@19?bundle",
+    "react-dom/client": "https://esm.sh/react-dom@19/client?bundle",
     "@google/genai": "https://esm.sh/@google/genai",
     "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
     "react/": "https://esm.sh/react@^19.2.4/"
@@ -73,7 +86,6 @@
   </div>
   
   <script type="module">
-    // Using run-tsx to directly execute TSX files in the browser
     import "https://esm.sh/run-tsx";
   </script>
   
