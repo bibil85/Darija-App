@@ -1,40 +1,17 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
   <title>Darija Toddler</title>
-  
+
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Darija Fun">
-  <link rel="manifest" href="manifest.json">
-  
+  <link rel="manifest" href="/manifest.json">
+
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@400;700&display=swap" rel="stylesheet">
-  
-  <script>
-    // Essential shim for browser environments
-    window.process = {
-      env: {
-        API_KEY: "" 
-      }
-    };
-
-    // Catch errors during boot and show them on screen
-    window.onerror = function(msg, url, line) {
-      const root = document.getElementById('root');
-      if (root) {
-        root.innerHTML = `<div style="padding: 20px; color: red; font-family: sans-serif;">
-          <h2>App Error</h2>
-          <p>${msg}</p>
-          <small>${url} (line ${line})</small>
-        </div>`;
-      }
-      return false;
-    };
-  </script>
 
   <style>
     :root {
@@ -61,19 +38,6 @@
     @keyframes wiggle { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(2deg); } }
     .hover-wiggle:hover { animation: wiggle 0.3s ease-in-out infinite; }
   </style>
-
-  <script type="importmap">
-{
-  "imports": {
-    "react": "https://esm.sh/react@19?bundle",
-    "react-dom": "https://esm.sh/react-dom@19?bundle",
-    "react-dom/client": "https://esm.sh/react-dom@19/client?bundle",
-    "@google/genai": "https://esm.sh/@google/genai",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
-    "react/": "https://esm.sh/react@^19.2.4/"
-  }
-}
-</script>
 </head>
 <body class="bg-amber-50">
   <div id="root">
@@ -84,11 +48,7 @@
       </div>
     </div>
   </div>
-  
-  <script type="module">
-    import "https://esm.sh/run-tsx";
-  </script>
-  
-  <script type="text/tsx" src="index.tsx"></script>
+
+  <script type="module" src="/index.tsx"></script>
 </body>
 </html>
