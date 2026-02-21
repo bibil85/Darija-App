@@ -1,9 +1,14 @@
 
 import { GoogleGenAI, Modality } from "@google/genai";
 
+const getAPIKey = () => {
+  const viteKey = import.meta.env.VITE_GEMINI_API_KEY;
+  const legacyKey = (window as any).process?.env?.API_KEY;
+  return viteKey || legacyKey || "";
+};
+
 const getAI = () => {
-  // Safe check for the API key in a browser environment
-  const apiKey = (window as any).process?.env?.API_KEY || "";
+  const apiKey = getAPIKey();
   if (!apiKey) {
     console.warn("Gemini API Key is missing. Audio features will not work.");
     return null;
