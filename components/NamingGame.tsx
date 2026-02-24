@@ -5,6 +5,7 @@ import { Word } from '../types.ts';
 import { INITIAL_WORDS } from '../constants.ts';
 import { generateDarijaAudio, playPCM } from '../services/geminiService.ts';
 import { playSuccessSound, playErrorSound, playClickSound } from '../services/soundService.ts';
+import { WordImage } from './WordImage.tsx';
 
 // Audio Helpers
 function encode(bytes: Uint8Array) {
@@ -75,7 +76,7 @@ export const NamingGame: React.FC<{ onComplete: () => void }> = ({ onComplete })
   };
 
   const startListening = async () => {
-    const apiKey = (window as any).process?.env?.API_KEY || "";
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY || (window as any).process?.env?.API_KEY || "";
     if (!apiKey) {
       alert("Please configure the Gemini API key to use voice features!");
       return;
@@ -196,8 +197,8 @@ export const NamingGame: React.FC<{ onComplete: () => void }> = ({ onComplete })
         <h2 className="text-2xl font-kids text-rose-500">What's this? 🤔</h2>
       </div>
 
-      <div className="w-full aspect-video bg-white rounded-3xl border-8 border-rose-100 overflow-hidden shadow-lg mb-2 relative">
-        <img src={targetWord.imageUrl} alt="target" className="w-full h-full object-cover" />
+      <div className="w-full aspect-video bg-white rounded-3xl border-8 border-rose-100 overflow-hidden shadow-lg mb-2 relative flex items-center justify-center">
+        <WordImage word={targetWord} className="w-full h-full object-cover" emojiClassName="text-9xl" />
         <button 
           onClick={startListening}
           className={`absolute bottom-4 right-4 w-16 h-16 rounded-full flex items-center justify-center shadow-2xl transition-all active:scale-90 ${isListening ? 'bg-red-500 animate-pulse' : 'bg-rose-500 hover:bg-rose-600'}`}

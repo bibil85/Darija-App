@@ -4,6 +4,7 @@ import { Word } from '../types';
 import { INITIAL_WORDS } from '../constants';
 import { generateDarijaAudio, playPCM } from '../services/geminiService';
 import { playSuccessSound, playErrorSound } from '../services/soundService';
+import { WordImage } from './WordImage';
 
 interface DiscoveryGameProps {
   onComplete: () => void;
@@ -93,7 +94,7 @@ export const DiscoveryGame: React.FC<DiscoveryGameProps> = ({ onComplete }) => {
                 feedback === 'wrong' && opt.id !== targetWord.id ? 'border-red-300 opacity-50' : 'border-white shadow-md'}
             `}
           >
-            <img src={opt.imageUrl} alt="choice" className="w-full h-full object-cover rounded-2xl" />
+            <WordImage word={opt} className="w-full h-full object-cover rounded-2xl" emojiClassName="text-7xl" />
           </button>
         ))}
       </div>

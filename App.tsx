@@ -5,14 +5,17 @@ import { Flashcard } from './components/Flashcard.tsx';
 import { MatchingGame } from './components/MatchingGame.tsx';
 import { DiscoveryGame } from './components/DiscoveryGame.tsx';
 import { NamingGame } from './components/NamingGame.tsx';
+import { MemoryGame } from './components/MemoryGame.tsx';
 import { CATEGORIES, INITIAL_WORDS } from './constants.ts';
 import { CategoryType, AppView } from './types.ts';
 import { playClickSound } from './services/soundService.ts';
+import { addStar, getStars } from './services/progressService.ts';
 
 const App: React.FC = () => {
   const [view, setView] = useState<AppView>('home');
   const [currentCategory, setCurrentCategory] = useState<CategoryType | null>(null);
   const [wordIndex, setWordIndex] = useState(0);
+  const [stars, setStars] = useState(getStars);
 
   const filteredWords = useMemo(() => {
     if (!currentCategory) return [];
@@ -36,6 +39,15 @@ const App: React.FC = () => {
     setWordIndex((prev) => (prev - 1 + filteredWords.length) % filteredWords.length);
   };
 
+  const handleGameComplete = () => {
+    const newStars = addStar();
+    setStars(newStars);
+    playClickSound();
+    setView('home');
+    setCurrentCategory(null);
+    setWordIndex(0);
+  };
+
   const handleHome = () => {
     playClickSound();
     setView('home');
@@ -49,14 +61,14 @@ const App: React.FC = () => {
   };
 
   return (
-    <Layout onHomeClick={handleHome} showBackButton={view !== 'home'}>
+    <Layout onHomeClick={handleHome} showBackButton={view !== 'home'} stars={stars}>
       {view === 'home' && (
         <div className="flex flex-col gap-8 animate-in slide-in-from-bottom-10 duration-500 pb-10">
           <div className="text-center">
             <h2 className="text-4xl font-kids text-amber-600 mb-2 animate-pop">Marhaba! 👋</h2>
             <p className="text-lg font-bold text-gray-500">Pick an activity!</p>
           </div>
-          
+
           <div className="flex flex-col gap-6">
             <div className="space-y-4">
               <h3 className="text-sm font-bold uppercase tracking-widest text-gray-400 px-2">School 📚</h3>
@@ -109,6 +121,17 @@ const App: React.FC = () => {
                   </div>
                   <span className="text-5xl transition-transform duration-300 group-hover:scale-125">🧸</span>
                 </button>
+
+                <button
+                  onClick={() => navigateToGame('memory')}
+                  className="group bg-purple-400 p-6 rounded-3xl shadow-xl flex items-center justify-between border-b-8 border-purple-600 border-opacity-20 active:translate-y-1 active:border-b-0 transition-all hover:bg-purple-300"
+                >
+                  <div className="text-left">
+                    <span className="text-white font-kids text-2xl block">Memory Match</span>
+                    <span className="text-purple-800 font-bold text-xs uppercase">Flip & find the pairs!</span>
+                  </div>
+                  <span className="text-5xl transition-transform duration-300 group-hover:scale-125">🧠</span>
+                </button>
               </div>
             </div>
           </div>
@@ -117,7 +140,7 @@ const App: React.FC = () => {
             <div className="w-16 h-16 rounded-full bg-amber-400 flex items-center justify-center text-3xl bounce-subtle group-hover:animate-bounce">🦁</div>
             <div>
               <p className="font-bold text-amber-800 group-hover:text-amber-600 transition-colors">Learning Moroccan</p>
-              <p className="text-xs text-gray-500">Fun games to help your kids recognize sounds and images!</p>
+              <p className="text-xs text-gray-500">{INITIAL_WORDS.length} words across {CATEGORIES.length} categories!</p>
             </div>
           </div>
         </div>
@@ -130,17 +153,18 @@ const App: React.FC = () => {
             <span className="text-xl font-kids text-amber-600">{currentCategory}</span>
             <span className="ml-auto text-amber-400 font-bold">{wordIndex + 1} / {filteredWords.length}</span>
           </div>
-          <Flashcard 
-            word={filteredWords[wordIndex]} 
-            onNext={handleNext} 
-            onPrev={handlePrev} 
+          <Flashcard
+            word={filteredWords[wordIndex]}
+            onNext={handleNext}
+            onPrev={handlePrev}
           />
         </div>
       )}
 
-      {view === 'match' && <MatchingGame onComplete={handleHome} />}
-      {view === 'discovery' && <DiscoveryGame onComplete={handleHome} />}
-      {view === 'naming' && <NamingGame onComplete={handleHome} />}
+      {view === 'match' && <MatchingGame onComplete={handleGameComplete} />}
+      {view === 'discovery' && <DiscoveryGame onComplete={handleGameComplete} />}
+      {view === 'naming' && <NamingGame onComplete={handleGameComplete} />}
+      {view === 'memory' && <MemoryGame onComplete={handleGameComplete} />}
     </Layout>
   );
 };

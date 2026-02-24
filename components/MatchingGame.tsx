@@ -4,6 +4,7 @@ import { Word } from '../types';
 import { INITIAL_WORDS } from '../constants';
 import { generateDarijaAudio, playPCM } from '../services/geminiService';
 import { playSuccessSound, playErrorSound } from '../services/soundService';
+import { WordImage } from './WordImage';
 
 interface MatchingGameProps {
   onComplete: () => void;
@@ -83,7 +84,7 @@ export const MatchingGame: React.FC<MatchingGameProps> = ({ onComplete }) => {
                 ${lastMatch === word.id ? 'animate-pop ring-4 ring-green-400 ring-offset-2' : ''}
               `}
             >
-              <img src={word.imageUrl} alt={word.english} className="w-full h-full object-cover" />
+              <WordImage word={word} className="w-full h-full object-cover" emojiClassName="text-6xl" />
               {matches.includes(word.id) && (
                 <div className="absolute inset-0 flex items-center justify-center bg-green-400 bg-opacity-20">
                   <span className="text-4xl animate-pop">✅</span>

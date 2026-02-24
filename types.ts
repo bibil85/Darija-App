@@ -3,10 +3,13 @@ export enum CategoryType {
   ANIMALS = 'Animals',
   FOOD = 'Food',
   FAMILY = 'Family',
-  OBJECTS = 'Objects'
+  OBJECTS = 'Objects',
+  COLORS = 'Colors',
+  BODY = 'Body Parts',
+  NUMBERS = 'Numbers'
 }
 
-export type AppView = 'home' | 'learn' | 'match' | 'discovery' | 'naming';
+export type AppView = 'home' | 'learn' | 'match' | 'discovery' | 'naming' | 'memory';
 
 export interface Word {
   id: string;
@@ -15,6 +18,7 @@ export interface Word {
   phonetics: string;
   category: CategoryType;
   imageUrl: string;
+  emoji: string;
 }
 
 export interface AppState {

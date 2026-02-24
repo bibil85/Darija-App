@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Word } from '../types';
 import { generateDarijaAudio, playPCM } from '../services/geminiService';
+import { WordImage } from './WordImage';
 
 interface FlashcardProps {
   word: Word;
@@ -15,7 +16,6 @@ export const Flashcard: React.FC<FlashcardProps> = ({ word, onNext, onPrev }) =>
   const [showSparkles, setShowSparkles] = useState(false);
 
   useEffect(() => {
-    // Reset sparkles on word change
     setShowSparkles(false);
     const timer = setTimeout(() => setShowSparkles(true), 100);
     return () => clearTimeout(timer);
@@ -26,7 +26,7 @@ export const Flashcard: React.FC<FlashcardProps> = ({ word, onNext, onPrev }) =>
     setIsLoadingAudio(true);
     setIsPlaying(true);
     setShowSparkles(true);
-    
+
     try {
       const audioData = await generateDarijaAudio(word.darija);
       if (audioData) {
@@ -36,7 +36,6 @@ export const Flashcard: React.FC<FlashcardProps> = ({ word, onNext, onPrev }) =>
       console.error("Audio playback error", error);
     } finally {
       setIsLoadingAudio(false);
-      // Give some visual feedback duration
       setTimeout(() => {
         setIsPlaying(false);
         setShowSparkles(false);
@@ -63,10 +62,11 @@ export const Flashcard: React.FC<FlashcardProps> = ({ word, onNext, onPrev }) =>
         <div className="absolute bottom-2 right-2 text-xl opacity-20">✨</div>
 
         <div className="w-full flex-grow flex items-center justify-center overflow-hidden rounded-2xl mb-4">
-          <img 
-            src={word.imageUrl} 
-            alt={word.english} 
+          <WordImage
+            key={word.id}
+            word={word}
             className={`max-h-full max-w-full object-contain rounded-xl transition-all duration-500 ${isPlaying ? 'scale-110 rotate-1' : 'scale-100 rotate-0'}`}
+            emojiClassName={`text-9xl transition-all duration-500 ${isPlaying ? 'scale-110' : 'scale-100'}`}
           />
         </div>
 
@@ -104,7 +104,7 @@ export const Flashcard: React.FC<FlashcardProps> = ({ word, onNext, onPrev }) =>
         </button>
 
         <div className="flex w-full justify-between items-center px-4">
-          <button 
+          <button
             onClick={onPrev}
             className="bg-amber-400 text-white font-kids px-6 py-3 rounded-2xl shadow-md active:bg-amber-500 transition-all hover:scale-105"
           >
@@ -115,7 +115,7 @@ export const Flashcard: React.FC<FlashcardProps> = ({ word, onNext, onPrev }) =>
             <span className="w-3 h-3 rounded-full bg-amber-200"></span>
             <span className="w-3 h-3 rounded-full bg-amber-200"></span>
           </div>
-          <button 
+          <button
             onClick={onNext}
             className="bg-green-500 text-white font-kids px-6 py-3 rounded-2xl shadow-md active:bg-green-600 transition-all hover:scale-105"
           >
