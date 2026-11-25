@@ -3,48 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
-  <title>Darija Toddler</title>
+  <title>Darija Fun! — Moroccan Arabic for Kids</title>
 
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Darija Fun">
+  <meta name="theme-color" content="#F59E0B">
+  <link rel="icon" type="image/svg+xml" href="/icon.svg">
+  <link rel="apple-touch-icon" href="/icon.svg">
   <link rel="manifest" href="/manifest.json">
 
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@400;700&display=swap" rel="stylesheet">
-
-  <style>
-    :root {
-      --sat: env(safe-area-inset-top);
-      --sar: env(safe-area-inset-right);
-      --sab: env(safe-area-inset-bottom);
-      --sal: env(safe-area-inset-left);
-    }
-    body {
-      font-family: 'Quicksand', sans-serif;
-      overflow: hidden;
-      background-color: #FFF9E6;
-      margin: 0;
-      padding: 0;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .font-kids { font-family: 'Fredoka One', cursive; }
-    @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-    .bounce-subtle { animation: bounce 2s infinite; }
-    @keyframes sparkle { 0% { transform: scale(0); opacity: 0; } 50% { transform: scale(1.5); opacity: 1; } 100% { transform: scale(0); opacity: 0; } }
-    .animate-sparkle { animation: sparkle 0.8s ease-out forwards; }
-    @keyframes pop-in { 0% { transform: scale(0.8); opacity: 0; } 70% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
-    .animate-pop { animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-    @keyframes wiggle { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(2deg); } }
-    .hover-wiggle:hover { animation: wiggle 0.3s ease-in-out infinite; }
-  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Noto+Sans+Arabic:wght@600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
 </head>
-<body class="bg-amber-50">
+<body class="bg-moroccan-paper">
   <div id="root">
-    <div class="h-screen w-full flex items-center justify-center bg-amber-50">
-      <div class="text-center">
-        <div class="text-6xl mb-4 bounce-subtle">🦁</div>
-        <p class="font-kids text-amber-600 text-xl">Loading Darija Fun...</p>
+    <div style="height:100vh;width:100%;display:flex;align-items:center;justify-content:center;background:#FFF7E6;">
+      <div style="text-align:center;font-family:Fredoka,sans-serif;color:#D97706;">
+        <div style="font-size:64px;margin-bottom:12px;">🦁</div>
+        <p style="font-size:24px;font-weight:700;">Marhaba! Loading Darija Fun...</p>
       </div>
     </div>
   </div>

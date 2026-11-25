@@ -1,29 +1,31 @@
+import { getSharedAudioContext } from './soundService.ts';
 
-import { GoogleGenAI, Modality } from "@google/genai";
-
-const getAPIKey = () => {
+function getAPIKey(): string {
   const viteKey = import.meta.env.VITE_GEMINI_API_KEY;
-  const legacyKey = (window as any).process?.env?.API_KEY;
-  return viteKey || legacyKey || "";
-};
+  const legacyKey = (window as unknown as { process?: { env?: { API_KEY?: string } } }).process?.env?.API_KEY;
+  return (viteKey || legacyKey || '').trim();
+}
 
-const getAI = () => {
+export function hasGeminiApiKey(): boolean {
+  return Boolean(getAPIKey());
+}
+
+export async function generateDarijaAudio(darija: string, arabic?: string): Promise<string | null> {
   const apiKey = getAPIKey();
-  if (!apiKey) {
-    console.warn("Gemini API Key is missing. Audio features will not work.");
-    return null;
-  }
-  return new GoogleGenAI({ apiKey });
-};
-
-export async function generateDarijaAudio(text: string): Promise<string | null> {
-  const ai = getAI();
-  if (!ai) return null;
+  if (!apiKey) return null;
 
   try {
+    // Dynamic import keeps @google/genai out of the initial JS bundle!
+    const { GoogleGenAI, Modality } = await import('@google/genai');
+    const ai = new GoogleGenAI({ apiKey });
+
+    const promptText = arabic
+      ? `Say this single Moroccan Darija word warmly and clearly for a toddler: "${arabic}" (${darija}). Say only the word.`
+      : `Say this single Moroccan Darija word warmly and clearly for a toddler: "${darija}". Say only the word.`;
+
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash-preview-tts",
-      contents: [{ parts: [{ text: `Say clearly in Moroccan Darija: ${text}` }] }],
+      model: 'gemini-2.5-flash-preview-tts',
+      contents: [{ parts: [{ text: promptText }] }],
       config: {
         responseModalities: [Modality.AUDIO],
         speechConfig: {
@@ -37,42 +39,38 @@ export async function generateDarijaAudio(text: string): Promise<string | null> 
     const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
     return base64Audio || null;
   } catch (error) {
-    console.error("Audio generation failed:", error);
+    console.warn('Gemini TTS failed, falling back to browser voice:', error);
     return null;
   }
 }
 
-export async function playPCM(base64: string) {
-  const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
-  
-  const decode = (b64: string) => {
-    const binaryString = atob(b64);
-    const len = binaryString.length;
-    const bytes = new Uint8Array(len);
-    for (let i = 0; i < len; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
-    return bytes;
-  };
+/** Play 24kHz mono 16-bit PCM base64 audio using the shared iOS-safe AudioContext */
+export async function playPCM(base64: string): Promise<void> {
+  const ctx = getSharedAudioContext();
+  if (!ctx) return;
 
-  const decodeAudioData = async (data: Uint8Array, ctx: AudioContext, sampleRate: number, numChannels: number) => {
-    const dataInt16 = new Int16Array(data.buffer);
-    const frameCount = dataInt16.length / numChannels;
-    const buffer = ctx.createBuffer(numChannels, frameCount, sampleRate);
+  const binaryString = atob(base64);
+  const len = binaryString.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
 
-    for (let channel = 0; channel < numChannels; channel++) {
-      const channelData = buffer.getChannelData(channel);
-      for (let i = 0; i < frameCount; i++) {
-        channelData[i] = dataInt16[i * numChannels + channel] / 32768.0;
-      }
-    }
-    return buffer;
-  };
+  const dataInt16 = new Int16Array(bytes.buffer, bytes.byteOffset, Math.floor(bytes.byteLength / 2));
+  const sampleRate = 24000;
+  const frameCount = dataInt16.length;
+  const audioBuffer = ctx.createBuffer(1, frameCount, sampleRate);
+  const channelData = audioBuffer.getChannelData(0);
 
-  const bytes = decode(base64);
-  const audioBuffer = await decodeAudioData(bytes, audioContext, 24000, 1);
-  const source = audioContext.createBufferSource();
-  source.buffer = audioBuffer;
-  source.connect(audioContext.destination);
-  source.start();
+  for (let i = 0; i < frameCount; i++) {
+    channelData[i] = dataInt16[i] / 32768.0;
+  }
+
+  return new Promise((resolve) => {
+    const source = ctx.createBufferSource();
+    source.buffer = audioBuffer;
+    source.connect(ctx.destination);
+    source.onended = () => resolve();
+    source.start();
+  });
 }

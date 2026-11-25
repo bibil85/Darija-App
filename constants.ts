@@ -1,54 +1,238 @@
+import { CategoryMeta, CategoryType, Word } from './types.ts';
 
-import { Word, CategoryType } from './types';
+export const CHILD_PROFILES = {
+  little: {
+    name: 'Nora',
+    tagline: 'Big pictures, gentle swipes & playful discovery!',
+    avatarUrl: '/art/nora-avatar.png',
+    badgeColor: '#F59E0B',
+  },
+  big: {
+    name: 'Sophia',
+    tagline: 'Exciting puzzles, memory tiles & Darija quests!',
+    avatarUrl: '/art/sophia-avatar.png',
+    badgeColor: '#1D5FD1',
+  },
+} as const;
 
-export const CATEGORIES = [
-  { id: CategoryType.ANIMALS, icon: '🐶', color: 'bg-orange-400', label: 'Animals' },
-  { id: CategoryType.FOOD, icon: '🍎', color: 'bg-red-400', label: 'Food' },
-  { id: CategoryType.FAMILY, icon: '👪', color: 'bg-pink-400', label: 'Family' },
-  { id: CategoryType.OBJECTS, icon: '🧸', color: 'bg-blue-400', label: 'Objects' },
+export const CATEGORIES: CategoryMeta[] = [
+  {
+    id: CategoryType.ANIMALS,
+    label: 'Animals',
+    darija: 'L-Hayawanat',
+    arabic: 'الحيوانات',
+    icon: 'lion',
+    bgClass: 'bg-orange-400',
+    borderClass: 'border-orange-600',
+    softBgClass: 'bg-orange-50',
+    textClass: 'text-orange-700',
+    hex: '#FB923C',
+    gradientFrom: '#FFAE52',
+    gradientTo: '#EA580C',
+  },
+  {
+    id: CategoryType.FOOD,
+    label: 'Yummy Food',
+    darija: 'L-Makla',
+    arabic: 'الماكلة',
+    icon: 'apple',
+    bgClass: 'bg-rose-400',
+    borderClass: 'border-rose-600',
+    softBgClass: 'bg-rose-50',
+    textClass: 'text-rose-700',
+    hex: '#FB7185',
+    gradientFrom: '#FF7B93',
+    gradientTo: '#E11D48',
+  },
+  {
+    id: CategoryType.FAMILY,
+    label: 'My Family',
+    darija: 'L-3a2ila',
+    arabic: 'العائلة',
+    icon: 'mama',
+    bgClass: 'bg-pink-400',
+    borderClass: 'border-pink-600',
+    softBgClass: 'bg-pink-50',
+    textClass: 'text-pink-700',
+    hex: '#F472B6',
+    gradientFrom: '#F984C4',
+    gradientTo: '#DB2777',
+  },
+  {
+    id: CategoryType.HOME,
+    label: 'Around Me',
+    darija: 'F-Dar',
+    arabic: 'فالدار',
+    icon: 'house',
+    bgClass: 'bg-sky-400',
+    borderClass: 'border-sky-600',
+    softBgClass: 'bg-sky-50',
+    textClass: 'text-sky-700',
+    hex: '#38BDF8',
+    gradientFrom: '#5AC8FA',
+    gradientTo: '#0284C7',
+  },
+  {
+    id: CategoryType.NATURE,
+    label: 'Nature & Sky',
+    darija: 'T-Tabi3a',
+    arabic: 'الطبيعة',
+    icon: 'sun',
+    bgClass: 'bg-emerald-400',
+    borderClass: 'border-emerald-600',
+    softBgClass: 'bg-emerald-50',
+    textClass: 'text-emerald-700',
+    hex: '#34D399',
+    gradientFrom: '#4ADE80',
+    gradientTo: '#059669',
+  },
+  {
+    id: CategoryType.COLORS,
+    label: 'Colors',
+    darija: 'L-Alwan',
+    arabic: 'الألوان',
+    icon: 'purple',
+    bgClass: 'bg-violet-400',
+    borderClass: 'border-violet-600',
+    softBgClass: 'bg-violet-50',
+    textClass: 'text-violet-700',
+    hex: '#A78BFA',
+    gradientFrom: '#C084FC',
+    gradientTo: '#7C3AED',
+  },
+  {
+    id: CategoryType.BODY,
+    label: 'My Body',
+    darija: 'L-Jism',
+    arabic: 'الجسم',
+    icon: 'hands',
+    bgClass: 'bg-amber-400',
+    borderClass: 'border-amber-600',
+    softBgClass: 'bg-amber-50',
+    textClass: 'text-amber-700',
+    hex: '#FBBF24',
+    gradientFrom: '#FCD34D',
+    gradientTo: '#D97706',
+  },
+  {
+    id: CategoryType.NUMBERS,
+    label: '1-2-3 Count',
+    darija: 'L-Arqam',
+    arabic: 'الأرقام',
+    icon: 'num_1',
+    bgClass: 'bg-teal-400',
+    borderClass: 'border-teal-600',
+    softBgClass: 'bg-teal-50',
+    textClass: 'text-teal-700',
+    hex: '#2DD4BF',
+    gradientFrom: '#38E8D0',
+    gradientTo: '#0F766E',
+  },
 ];
 
-export const INITIAL_WORDS: Word[] = [
-  // Animals
-  { id: '1', english: 'Cat', darija: 'Mouch', phonetics: 'Moo-sh', category: CategoryType.ANIMALS, imageUrl: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&w=400&q=80' },
-  { id: '2', english: 'Dog', darija: 'Kelb', phonetics: 'Kel-b', category: CategoryType.ANIMALS, imageUrl: 'https://images.unsplash.com/photo-1517849845537-4d257902454a?auto=format&fit=crop&w=400&q=80' },
-  { id: '11', english: 'Lion', darija: 'Sba3', phonetics: 'S-ba-h', category: CategoryType.ANIMALS, imageUrl: 'https://images.unsplash.com/photo-1546182990-dffeafbe841d?auto=format&fit=crop&w=400&q=80' },
-  { id: '12', english: 'Cow', darija: 'Begra', phonetics: 'Beg-ra', category: CategoryType.ANIMALS, imageUrl: 'https://images.unsplash.com/photo-1546445317-29f4545e9d53?auto=format&fit=crop&w=400&q=80' },
-  { id: '13', english: 'Bird', darija: 'Tir', phonetics: 'Teer', category: CategoryType.ANIMALS, imageUrl: 'https://images.unsplash.com/photo-1522926193341-e9fed196d4c8?auto=format&fit=crop&w=400&q=80' },
-  { id: '26', english: 'Rabbit', darija: 'Gnina', phonetics: 'G-nee-na', category: CategoryType.ANIMALS, imageUrl: 'https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?auto=format&fit=crop&w=400&q=80' },
-  { id: '27', english: 'Fish', darija: 'Houta', phonetics: 'Hoo-ta', category: CategoryType.ANIMALS, imageUrl: 'https://images.unsplash.com/photo-1524704654690-b56c05c78a00?auto=format&fit=crop&w=400&q=80' },
-  { id: '35', english: 'Elephant', darija: 'Fil', phonetics: 'Feel', category: CategoryType.ANIMALS, imageUrl: 'https://images.unsplash.com/photo-1557050543-4d5f4e07ef46?auto=format&fit=crop&w=400&q=80' },
+export const WORDS: Word[] = [
+  // Animals (8)
+  { id: 'cat', english: 'Cat', darija: 'Mouch', arabic: 'موش', phonetics: 'Moo-sh', category: CategoryType.ANIMALS, bgHex: '#FFF3E0', accentHex: '#EA580C', funCue: 'Meow!' },
+  { id: 'dog', english: 'Dog', darija: 'Kelb', arabic: 'كلب', phonetics: 'Kel-b', category: CategoryType.ANIMALS, bgHex: '#FEF3C7', accentHex: '#B45309', funCue: 'Woof!' },
+  { id: 'lion', english: 'Lion', darija: 'Sba3', arabic: 'سبع', phonetics: 'S-baa', category: CategoryType.ANIMALS, bgHex: '#FFEDD5', accentHex: '#C2410C', funCue: 'Roar!' },
+  { id: 'cow', english: 'Cow', darija: 'Begra', arabic: 'بقرة', phonetics: 'Beg-ra', category: CategoryType.ANIMALS, bgHex: '#ECFDF5', accentHex: '#059669', funCue: 'Mooo!' },
+  { id: 'bird', english: 'Bird', darija: 'Tir', arabic: 'طير', phonetics: 'Teer', category: CategoryType.ANIMALS, bgHex: '#E0F2FE', accentHex: '#0284C7', funCue: 'Tweet!' },
+  { id: 'rabbit', english: 'Rabbit', darija: 'Gnina', arabic: 'قنينة', phonetics: 'G-nee-na', category: CategoryType.ANIMALS, bgHex: '#FCE7F3', accentHex: '#DB2777', funCue: 'Hop hop!' },
+  { id: 'fish', english: 'Fish', darija: 'Houta', arabic: 'حوتة', phonetics: 'Hoo-ta', category: CategoryType.ANIMALS, bgHex: '#CFFAFE', accentHex: '#0891B2', funCue: 'Blub blub!' },
+  { id: 'elephant', english: 'Elephant', darija: 'Fil', arabic: 'فيل', phonetics: 'Feel', category: CategoryType.ANIMALS, bgHex: '#EDE9FE', accentHex: '#6D28D9', funCue: 'Toot!' },
 
-  // Food
-  { id: '3', english: 'Apple', darija: 'Tefa7', phonetics: 'Tef-fah', category: CategoryType.FOOD, imageUrl: 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?auto=format&fit=crop&w=400&q=80' },
-  { id: '4', english: 'Milk', darija: 'Hlib', phonetics: 'H-leeb', category: CategoryType.FOOD, imageUrl: 'https://images.unsplash.com/photo-1563636619-e9107da5a76a?auto=format&fit=crop&w=400&q=80' },
-  { id: '5', english: 'Water', darija: 'Ma', phonetics: 'Ma', category: CategoryType.FOOD, imageUrl: 'https://images.unsplash.com/photo-1548839140-29a749e1cf4d?auto=format&fit=crop&w=400&q=80' },
-  { id: '14', english: 'Bread', darija: 'Khobz', phonetics: 'Kh-ob-z', category: CategoryType.FOOD, imageUrl: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=400&q=80' },
-  { id: '15', english: 'Banana', darija: 'Banan', phonetics: 'Ba-nan', category: CategoryType.FOOD, imageUrl: 'https://images.unsplash.com/photo-1481349518771-20055b2a7b24?auto=format&fit=crop&w=400&q=80' },
-  { id: '16', english: 'Egg', darija: 'Bayda', phonetics: 'Bay-da', category: CategoryType.FOOD, imageUrl: 'https://images.unsplash.com/photo-1582722872445-44c501f3c89d?auto=format&fit=crop&w=400&q=80' },
-  { id: '28', english: 'Orange', darija: 'Limouna', phonetics: 'Lee-moo-na', category: CategoryType.FOOD, imageUrl: 'https://images.unsplash.com/photo-1547514701-42782101795e?auto=format&fit=crop&w=400&q=80' },
-  { id: '29', english: 'Grapes', darija: '3neb', phonetics: 'E-neb', category: CategoryType.FOOD, imageUrl: 'https://images.unsplash.com/photo-1537640538966-79f369143f8f?auto=format&fit=crop&w=400&q=80' },
+  // Food (8)
+  { id: 'apple', english: 'Apple', darija: 'Tefa7a', arabic: 'تفاحة', phonetics: 'Tef-fa-ha', category: CategoryType.FOOD, bgHex: '#FFE4E6', accentHex: '#E11D48', funCue: 'Crunch!' },
+  { id: 'milk', english: 'Milk', darija: 'Hlib', arabic: 'حليب', phonetics: 'H-leeb', category: CategoryType.FOOD, bgHex: '#EFF6FF', accentHex: '#2563EB', funCue: 'Yum!' },
+  { id: 'water', english: 'Water', darija: 'L-Ma', arabic: 'الما', phonetics: 'El-ma', category: CategoryType.FOOD, bgHex: '#E0F2FE', accentHex: '#0284C7', funCue: 'Splash!' },
+  { id: 'bread', english: 'Bread', darija: 'Khobz', arabic: 'خبز', phonetics: 'Khob-z', category: CategoryType.FOOD, bgHex: '#FEF3C7', accentHex: '#B45309', funCue: 'Warm!' },
+  { id: 'banana', english: 'Banana', darija: 'Banan', arabic: 'بنان', phonetics: 'Ba-nan', category: CategoryType.FOOD, bgHex: '#FEF9C3', accentHex: '#CA8A04', funCue: 'Peel!' },
+  { id: 'egg', english: 'Egg', darija: 'Bayda', arabic: 'بيضة', phonetics: 'Bay-da', category: CategoryType.FOOD, bgHex: '#FFFBEB', accentHex: '#D97706', funCue: 'Tap tap!' },
+  { id: 'orange', english: 'Orange', darija: 'Limouna', arabic: 'ليمونة', phonetics: 'Lee-moo-na', category: CategoryType.FOOD, bgHex: '#FFEDD5', accentHex: '#EA580C', funCue: 'Juicy!' },
+  { id: 'grapes', english: 'Grapes', darija: '3neb', arabic: 'عنب', phonetics: 'Aa-neb', category: CategoryType.FOOD, bgHex: '#F3E8FF', accentHex: '#9333EA', funCue: 'Pop!' },
 
-  // Family
-  { id: '6', english: 'Mama', darija: 'Mama', phonetics: 'Ma-ma', category: CategoryType.FAMILY, imageUrl: 'https://images.unsplash.com/photo-1536761139421-44770abd6d81?auto=format&fit=crop&w=400&q=80' },
-  { id: '7', english: 'Baba', darija: 'Baba', phonetics: 'Ba-ba', category: CategoryType.FAMILY, imageUrl: 'https://images.unsplash.com/photo-1490730141103-6cac27aaab94?auto=format&fit=crop&w=400&q=80' },
-  { id: '17', english: 'Brother', darija: 'Khoya', phonetics: 'Kho-ya', category: CategoryType.FAMILY, imageUrl: 'https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=400&q=80' },
-  { id: '18', english: 'Sister', darija: 'Khti', phonetics: 'Kh-tee', category: CategoryType.FAMILY, imageUrl: 'https://images.unsplash.com/photo-1544717305-27a734ef4164?auto=format&fit=crop&w=400&q=80' },
-  { id: '19', english: 'Grandpa', darija: 'Jedi', phonetics: 'Je-dee', category: CategoryType.FAMILY, imageUrl: 'https://images.unsplash.com/photo-1542171120-1a74d2576b92?auto=format&fit=crop&w=400&q=80' },
-  { id: '20', english: 'Grandma', darija: 'Jedati', phonetics: 'Je-da-tee', category: CategoryType.FAMILY, imageUrl: 'https://images.unsplash.com/photo-1530021356476-0a6375ffe73b?auto=format&fit=crop&w=400&q=80' },
-  { id: '30', english: 'Baby', darija: 'Bebi', phonetics: 'Be-bee', category: CategoryType.FAMILY, imageUrl: 'https://images.unsplash.com/photo-1519689689253-c960efaba21e?auto=format&fit=crop&w=400&q=80' },
-  { id: '31', english: 'Friend', darija: 'Sahbi', phonetics: 'Sah-bee', category: CategoryType.FAMILY, imageUrl: 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=400&q=80' },
+  // Family (8)
+  { id: 'mama', english: 'Mama', darija: 'Mama', arabic: 'ماما', phonetics: 'Ma-ma', category: CategoryType.FAMILY, bgHex: '#FCE7F3', accentHex: '#DB2777', funCue: 'Hug!' },
+  { id: 'baba', english: 'Baba', darija: 'Baba', arabic: 'بابا', phonetics: 'Ba-ba', category: CategoryType.FAMILY, bgHex: '#DBEAFE', accentHex: '#1D4ED8', funCue: 'Hi!' },
+  { id: 'brother', english: 'Brother', darija: 'Khoya', arabic: 'خويا', phonetics: 'Kho-ya', category: CategoryType.FAMILY, bgHex: '#CCFBF1', accentHex: '#0D9488', funCue: 'Play!' },
+  { id: 'sister', english: 'Sister', darija: 'Khti', arabic: 'ختي', phonetics: 'Kh-tee', category: CategoryType.FAMILY, bgHex: '#FAE8FF', accentHex: '#C026D3', funCue: 'Giggle!' },
+  { id: 'grandpa', english: 'Grandpa', darija: 'Jedi', arabic: 'جدي', phonetics: 'Je-dee', category: CategoryType.FAMILY, bgHex: '#FEF3C7', accentHex: '#B45309', funCue: 'Stories!' },
+  { id: 'grandma', english: 'Grandma', darija: 'Jedati', arabic: 'جداتي', phonetics: 'Je-da-tee', category: CategoryType.FAMILY, bgHex: '#FFE4E6', accentHex: '#E11D48', funCue: 'Kisses!' },
+  { id: 'baby', english: 'Baby', darija: 'Bebi', arabic: 'بيبي', phonetics: 'Be-bee', category: CategoryType.FAMILY, bgHex: '#E0E7FF', accentHex: '#4F46E5', funCue: 'Goo-goo!' },
+  { id: 'friend', english: 'Friend', darija: 'Sahbi', arabic: 'صاحبي', phonetics: 'Sah-bee', category: CategoryType.FAMILY, bgHex: '#DCFCE7', accentHex: '#16A34A', funCue: 'High five!' },
 
-  // Objects
-  { id: '8', english: 'Ball', darija: 'Koura', phonetics: 'Koo-ra', category: CategoryType.OBJECTS, imageUrl: 'https://images.unsplash.com/photo-1580028286552-3a60afa99301?auto=format&fit=crop&w=400&q=80' },
-  { id: '9', english: 'Car', darija: 'Tonobil', phonetics: 'To-no-beel', category: CategoryType.OBJECTS, imageUrl: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=400&q=80' },
-  { id: '10', english: 'House', darija: 'Dar', phonetics: 'Dar', category: CategoryType.OBJECTS, imageUrl: 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&w=400&q=80' },
-  { id: '21', english: 'Bed', darija: 'Namoussiya', phonetics: 'Na-moo-see-ya', category: CategoryType.OBJECTS, imageUrl: 'https://images.unsplash.com/photo-1505693419148-ad3035464ebc?auto=format&fit=crop&w=400&q=80' },
-  { id: '22', english: 'Chair', darija: 'Koursi', phonetics: 'Koor-see', category: CategoryType.OBJECTS, imageUrl: 'https://images.unsplash.com/photo-1503602642458-232111445657?auto=format&fit=crop&w=400&q=80' },
-  { id: '23', english: 'Sun', darija: 'Chems', phonetics: 'Shem-s', category: CategoryType.OBJECTS, imageUrl: 'https://images.unsplash.com/photo-1529690656645-15d31063f96d?auto=format&fit=crop&w=400&q=80' },
-  { id: '24', english: 'Moon', darija: 'Gmer', phonetics: 'G-mer', category: CategoryType.OBJECTS, imageUrl: 'https://images.unsplash.com/photo-1522030239044-1ae2f1441c8d?auto=format&fit=crop&w=400&q=80' },
-  { id: '25', english: 'Tree', darija: 'Sejra', phonetics: 'Sej-ra', category: CategoryType.OBJECTS, imageUrl: 'https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?auto=format&fit=crop&w=400&q=80' },
-  { id: '32', english: 'Book', darija: 'Ktab', phonetics: 'K-tab', category: CategoryType.OBJECTS, imageUrl: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=400&q=80' },
-  { id: '33', english: 'Key', darija: 'Saroout', phonetics: 'Sa-root', category: CategoryType.OBJECTS, imageUrl: 'https://images.unsplash.com/photo-1516733968668-dbdce39c46ef?auto=format&fit=crop&w=400&q=80' },
-  { id: '34', english: 'Table', darija: 'Tabla', phonetics: 'Tab-la', category: CategoryType.OBJECTS, imageUrl: 'https://images.unsplash.com/photo-1533090481720-856c6e3c1fdc?auto=format&fit=crop&w=400&q=80' },
+  // Around Me / Home (8)
+  { id: 'ball', english: 'Ball', darija: 'Koura', arabic: 'كورة', phonetics: 'Koo-ra', category: CategoryType.HOME, bgHex: '#FEF2F2', accentHex: '#EF4444', funCue: 'Bounce!' },
+  { id: 'car', english: 'Car', darija: 'Tonobil', arabic: 'طوموبيل', phonetics: 'To-no-beel', category: CategoryType.HOME, bgHex: '#DBEAFE', accentHex: '#2563EB', funCue: 'Beep beep!' },
+  { id: 'house', english: 'House', darija: 'Dar', arabic: 'دار', phonetics: 'Dar', category: CategoryType.HOME, bgHex: '#FFEDD5', accentHex: '#EA580C', funCue: 'Home!' },
+  { id: 'bed', english: 'Bed', darija: 'Namoussiya', arabic: 'ناموسية', phonetics: 'Na-moo-see-ya', category: CategoryType.HOME, bgHex: '#EDE9FE', accentHex: '#7C3AED', funCue: 'Night-night!' },
+  { id: 'chair', english: 'Chair', darija: 'Koursi', arabic: 'كرسي', phonetics: 'Koor-see', category: CategoryType.HOME, bgHex: '#FEF3C7', accentHex: '#B45309', funCue: 'Sit!' },
+  { id: 'book', english: 'Book', darija: 'Ktab', arabic: 'كتاب', phonetics: 'K-tab', category: CategoryType.HOME, bgHex: '#CCFBF1', accentHex: '#0F766E', funCue: 'Read!' },
+  { id: 'key', english: 'Key', darija: 'Sarout', arabic: 'ساروت', phonetics: 'Sa-root', category: CategoryType.HOME, bgHex: '#FEF9C3', accentHex: '#CA8A04', funCue: 'Jingle!' },
+  { id: 'table', english: 'Table', darija: 'Tabla', arabic: 'طبلة', phonetics: 'Tab-la', category: CategoryType.HOME, bgHex: '#F3E8FF', accentHex: '#7E22CE', funCue: 'Tap!' },
+
+  // Nature & Sky (6)
+  { id: 'sun', english: 'Sun', darija: 'Chems', arabic: 'شمس', phonetics: 'Shem-s', category: CategoryType.NATURE, bgHex: '#FEF9C3', accentHex: '#D97706', funCue: 'Shine!' },
+  { id: 'moon', english: 'Moon', darija: 'Gmer', arabic: 'قمر', phonetics: 'G-mer', category: CategoryType.NATURE, bgHex: '#E0E7FF', accentHex: '#4338CA', funCue: 'Twinkle!' },
+  { id: 'star', english: 'Star', darija: 'Nejma', arabic: 'نجمة', phonetics: 'Nej-ma', category: CategoryType.NATURE, bgHex: '#FEF3C7', accentHex: '#D97706', funCue: 'Sparkle!' },
+  { id: 'tree', english: 'Tree', darija: 'Chejra', arabic: 'شجرة', phonetics: 'Shej-ra', category: CategoryType.NATURE, bgHex: '#DCFCE7', accentHex: '#15803D', funCue: 'Whoosh!' },
+  { id: 'flower', english: 'Flower', darija: 'Werda', arabic: 'وردة', phonetics: 'Wer-da', category: CategoryType.NATURE, bgHex: '#FCE7F3', accentHex: '#DB2777', funCue: 'Sniff!' },
+  { id: 'cloud', english: 'Cloud', darija: 'S7aba', arabic: 'سحابة', phonetics: 'S-ha-ba', category: CategoryType.NATURE, bgHex: '#E0F2FE', accentHex: '#0284C7', funCue: 'Float!' },
+
+  // Colors (6)
+  { id: 'red', english: 'Red', darija: 'Hmer', arabic: 'حمر', phonetics: 'H-mer', category: CategoryType.COLORS, bgHex: '#FEE2E2', accentHex: '#DC2626' },
+  { id: 'blue', english: 'Blue', darija: 'Zreq', arabic: 'زرق', phonetics: 'Z-req', category: CategoryType.COLORS, bgHex: '#DBEAFE', accentHex: '#1D5FD1' },
+  { id: 'yellow', english: 'Yellow', darija: 'Sfer', arabic: 'صفر', phonetics: 'S-fer', category: CategoryType.COLORS, bgHex: '#FEF9C3', accentHex: '#CA8A04' },
+  { id: 'green', english: 'Green', darija: 'Khder', arabic: 'خضر', phonetics: 'Kh-der', category: CategoryType.COLORS, bgHex: '#DCFCE7', accentHex: '#16A34A' },
+  { id: 'orange_color', english: 'Orange', darija: 'Limouni', arabic: 'ليموني', phonetics: 'Lee-moo-nee', category: CategoryType.COLORS, bgHex: '#FFEDD5', accentHex: '#EA580C' },
+  { id: 'purple', english: 'Purple', darija: 'Mouve', arabic: 'موف', phonetics: 'Moov', category: CategoryType.COLORS, bgHex: '#F3E8FF', accentHex: '#9333EA' },
+
+  // Body Parts (10) — Super interactive for 2yo & 4yo!
+  { id: 'head', english: 'Head', darija: 'Ras', arabic: 'راس', phonetics: 'Ras', category: CategoryType.BODY, bgHex: '#FEF3C7', accentHex: '#D97706', funCue: 'Nod nod!' },
+  { id: 'eyes', english: 'Eyes', darija: '3inin', arabic: 'عينين', phonetics: 'Aa-neen', category: CategoryType.BODY, bgHex: '#E0F2FE', accentHex: '#0284C7', funCue: 'Blink!' },
+  { id: 'nose', english: 'Nose', darija: 'Nif', arabic: 'نيف', phonetics: 'Neef', category: CategoryType.BODY, bgHex: '#FCE7F3', accentHex: '#DB2777', funCue: 'Boop!' },
+  { id: 'mouth', english: 'Mouth', darija: 'Fomm', arabic: 'فم', phonetics: 'Fom', category: CategoryType.BODY, bgHex: '#FFE4E6', accentHex: '#E11D48', funCue: 'Smile!' },
+  { id: 'ears', english: 'Ears', darija: 'Wednin', arabic: 'ودنين', phonetics: 'Wed-neen', category: CategoryType.BODY, bgHex: '#FFEDD5', accentHex: '#EA580C', funCue: 'Listen!' },
+  { id: 'hands', english: 'Hands', darija: 'Yeddin', arabic: 'يدين', phonetics: 'Yed-deen', category: CategoryType.BODY, bgHex: '#FEF9C3', accentHex: '#CA8A04', funCue: 'Clap clap!' },
+  { id: 'feet', english: 'Feet', darija: 'Rejlin', arabic: 'رجلين', phonetics: 'Rej-leen', category: CategoryType.BODY, bgHex: '#DCFCE7', accentHex: '#16A34A', funCue: 'Stomp!' },
+  { id: 'belly', english: 'Belly', darija: 'Kerch', arabic: 'كرش', phonetics: 'Ker-sh', category: CategoryType.BODY, bgHex: '#EDE9FE', accentHex: '#7C3AED', funCue: 'Tickle!' },
+  { id: 'hair', english: 'Hair', darija: 'Ch3er', arabic: 'شعر', phonetics: 'Sh-aar', category: CategoryType.BODY, bgHex: '#FEF3C7', accentHex: '#92400E', funCue: 'Brush!' },
+  { id: 'teeth', english: 'Teeth', darija: 'Sennin', arabic: 'سنان', phonetics: 'Sen-neen', category: CategoryType.BODY, bgHex: '#ECFEFF', accentHex: '#0891B2', funCue: 'Sparkle!' },
+
+  // Numbers 1-10 (10)
+  { id: 'num_1', english: 'One (1)', darija: 'Wa7ed', arabic: 'واحد', phonetics: 'Wa-hed', category: CategoryType.NUMBERS, bgHex: '#FEE2E2', accentHex: '#DC2626', funCue: '1!' },
+  { id: 'num_2', english: 'Two (2)', darija: 'Jouj', arabic: 'جوج', phonetics: 'Jooj', category: CategoryType.NUMBERS, bgHex: '#FFEDD5', accentHex: '#EA580C', funCue: '1, 2!' },
+  { id: 'num_3', english: 'Three (3)', darija: 'Tlata', arabic: 'ثلاثة', phonetics: 'Tla-ta', category: CategoryType.NUMBERS, bgHex: '#FEF9C3', accentHex: '#CA8A04', funCue: '1, 2, 3!' },
+  { id: 'num_4', english: 'Four (4)', darija: 'Reb3a', arabic: 'ربعة', phonetics: 'Reb-aa', category: CategoryType.NUMBERS, bgHex: '#DCFCE7', accentHex: '#16A34A', funCue: '4!' },
+  { id: 'num_5', english: 'Five (5)', darija: 'Khemsa', arabic: 'خمسة', phonetics: 'Khem-sa', category: CategoryType.NUMBERS, bgHex: '#CCFBF1', accentHex: '#0D9488', funCue: 'High 5!' },
+  { id: 'num_6', english: 'Six (6)', darija: 'Setta', arabic: 'ستة', phonetics: 'Set-ta', category: CategoryType.NUMBERS, bgHex: '#E0F2FE', accentHex: '#0284C7', funCue: '6!' },
+  { id: 'num_7', english: 'Seven (7)', darija: 'Seb3a', arabic: 'سبعة', phonetics: 'Seb-aa', category: CategoryType.NUMBERS, bgHex: '#DBEAFE', accentHex: '#1D4ED8', funCue: '7!' },
+  { id: 'num_8', english: 'Eight (8)', darija: 'Tmenya', arabic: 'تمنية', phonetics: 'Tmen-ya', category: CategoryType.NUMBERS, bgHex: '#EDE9FE', accentHex: '#7C3AED', funCue: '8!' },
+  { id: 'num_9', english: 'Nine (9)', darija: 'Tes3oud', arabic: 'تسعود', phonetics: 'Tes-ood', category: CategoryType.NUMBERS, bgHex: '#FAE8FF', accentHex: '#C026D3', funCue: '9!' },
+  { id: 'num_10', english: 'Ten (10)', darija: '3echra', arabic: 'عشرة', phonetics: 'Aash-ra', category: CategoryType.NUMBERS, bgHex: '#FCE7F3', accentHex: '#DB2777', funCue: '10 fingers!' },
+];
+
+export const WORD_BY_ID: Record<string, Word> = Object.fromEntries(
+  WORDS.map((w) => [w.id, w])
+);
+
+export const CATEGORY_BY_ID: Record<CategoryType, CategoryMeta> = Object.fromEntries(
+  CATEGORIES.map((c) => [c.id, c])
+) as Record<CategoryType, CategoryMeta>;
+
+/** Unbiased Fisher-Yates shuffle returning a new array */
+export function shuffleArray<T>(items: readonly T[]): T[] {
+  const arr = [...items];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+export const PRAISE_PHRASES = [
+  { darija: 'Bravo!', arabic: 'برافو!', english: 'Great job!' },
+  { darija: 'Tbarkellah!', arabic: 'تبارك الله!', english: 'Amazing!' },
+  { darija: 'Bessa7a!', arabic: 'بالصحة!', english: 'Awesome!' },
+  { darija: 'Zwin bezzaf!', arabic: 'زوين بزاف!', english: 'So good!' },
 ];
