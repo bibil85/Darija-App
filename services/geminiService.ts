@@ -44,10 +44,40 @@ export async function generateDarijaAudio(darija: string, arabic?: string): Prom
   }
 }
 
-/** Play 24kHz mono 16-bit PCM base64 audio using the shared iOS-safe AudioContext */
+let activePCMSource: AudioBufferSourceNode | null = null;
+let activePCMGain: GainNode | null = null;
+
+/** Smoothly crossfade out any currently playing Gemini PCM voice (~65ms) */
+export function fadeOutActivePCM(fadeMs = 65) {
+  const ctx = getSharedAudioContext();
+  const src = activePCMSource;
+  const gain = activePCMGain;
+  activePCMSource = null;
+  activePCMGain = null;
+
+  if (!src) return;
+  try {
+    if (ctx && gain) {
+      const now = ctx.currentTime;
+      const dur = Math.max(0.02, fadeMs / 1000);
+      gain.gain.cancelScheduledValues(now);
+      gain.gain.setValueAtTime(Math.max(0.0001, gain.gain.value), now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+      src.stop(now + dur + 0.01);
+    } else {
+      src.stop();
+    }
+  } catch {
+    // ignore already stopped nodes
+  }
+}
+
+/** Play 24kHz mono 16-bit PCM base64 audio using the shared iOS-safe AudioContext with smooth crossfade */
 export async function playPCM(base64: string): Promise<void> {
   const ctx = getSharedAudioContext();
   if (!ctx) return;
+
+  fadeOutActivePCM(65);
 
   const binaryString = atob(base64);
   const len = binaryString.length;
@@ -68,9 +98,24 @@ export async function playPCM(base64: string): Promise<void> {
 
   return new Promise((resolve) => {
     const source = ctx.createBufferSource();
+    const gain = ctx.createGain();
+    const now = ctx.currentTime;
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.linearRampToValueAtTime(1.0, now + 0.025); // soft 25ms crossfade-in
+
     source.buffer = audioBuffer;
-    source.connect(ctx.destination);
-    source.onended = () => resolve();
-    source.start();
+    source.connect(gain);
+    gain.connect(ctx.destination);
+    activePCMSource = source;
+    activePCMGain = gain;
+
+    source.onended = () => {
+      if (activePCMSource === source) {
+        activePCMSource = null;
+        activePCMGain = null;
+      }
+      resolve();
+    };
+    source.start(now);
   });
 }

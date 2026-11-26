@@ -45,6 +45,20 @@ export const CATEGORIES: CategoryMeta[] = [
     gradientTo: '#E11D48',
   },
   {
+    id: CategoryType.VEHICLES,
+    label: 'Vehicles',
+    darija: 'L-Markabat',
+    arabic: 'المركبات',
+    icon: 'car',
+    bgClass: 'bg-blue-500',
+    borderClass: 'border-blue-700',
+    softBgClass: 'bg-blue-50',
+    textClass: 'text-blue-700',
+    hex: '#3B82F6',
+    gradientFrom: '#60A5FA',
+    gradientTo: '#1D4ED8',
+  },
+  {
     id: CategoryType.FAMILY,
     label: 'My Family',
     darija: 'L-3a2ila',
@@ -161,9 +175,15 @@ export const WORDS: Word[] = [
   { id: 'baby', english: 'Baby', darija: 'Bebi', arabic: 'بيبي', phonetics: 'Be-bee', category: CategoryType.FAMILY, bgHex: '#E0E7FF', accentHex: '#4F46E5', funCue: 'Goo-goo!' },
   { id: 'friend', english: 'Friend', darija: 'Sahbi', arabic: 'صاحبي', phonetics: 'Sah-bee', category: CategoryType.FAMILY, bgHex: '#DCFCE7', accentHex: '#16A34A', funCue: 'High five!' },
 
-  // Around Me / Home (8)
+  // Vehicles (5) — Bespoke multi-part animated 3D vehicles!
+  { id: 'car', english: 'Car', darija: 'Tonobil', arabic: 'طوموبيل', phonetics: 'To-no-beel', category: CategoryType.VEHICLES, bgHex: '#DBEAFE', accentHex: '#2563EB', funCue: 'Beep beep!' },
+  { id: 'bus', english: 'Bus', darija: 'Tobis', arabic: 'طوبيس', phonetics: 'To-bees', category: CategoryType.VEHICLES, bgHex: '#FEF9C3', accentHex: '#D97706', funCue: 'Honk honk!' },
+  { id: 'plane', english: 'Airplane', darija: 'Tiyara', arabic: 'طيارة', phonetics: 'Tee-ya-ra', category: CategoryType.VEHICLES, bgHex: '#E0F2FE', accentHex: '#0284C7', funCue: 'Zoom!' },
+  { id: 'boat', english: 'Boat', darija: 'Bato', arabic: 'باطو', phonetics: 'Ba-to', category: CategoryType.VEHICLES, bgHex: '#CFFAFE', accentHex: '#0891B2', funCue: 'Splash!' },
+  { id: 'train', english: 'Train', darija: 'Tran', arabic: 'تران', phonetics: 'Tran', category: CategoryType.VEHICLES, bgHex: '#DCFCE7', accentHex: '#15803D', funCue: 'Choo-choo!' },
+
+  // Around Me / Home (7)
   { id: 'ball', english: 'Ball', darija: 'Koura', arabic: 'كورة', phonetics: 'Koo-ra', category: CategoryType.HOME, bgHex: '#FEF2F2', accentHex: '#EF4444', funCue: 'Bounce!' },
-  { id: 'car', english: 'Car', darija: 'Tonobil', arabic: 'طوموبيل', phonetics: 'To-no-beel', category: CategoryType.HOME, bgHex: '#DBEAFE', accentHex: '#2563EB', funCue: 'Beep beep!' },
   { id: 'house', english: 'House', darija: 'Dar', arabic: 'دار', phonetics: 'Dar', category: CategoryType.HOME, bgHex: '#FFEDD5', accentHex: '#EA580C', funCue: 'Home!' },
   { id: 'bed', english: 'Bed', darija: 'Namoussiya', arabic: 'ناموسية', phonetics: 'Na-moo-see-ya', category: CategoryType.HOME, bgHex: '#EDE9FE', accentHex: '#7C3AED', funCue: 'Night-night!' },
   { id: 'chair', english: 'Chair', darija: 'Koursi', arabic: 'كرسي', phonetics: 'Koor-see', category: CategoryType.HOME, bgHex: '#FEF3C7', accentHex: '#B45309', funCue: 'Sit!' },

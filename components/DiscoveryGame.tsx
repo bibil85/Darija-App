@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { WORDS, shuffleArray } from '../constants.ts';
-import { AgeMode, ParentSettings, Word } from '../types.ts';
-import { WordIllustration } from './WordIllustration.tsx';
-import { Mascot } from './Mascot.tsx';
-import { CelebrationModal } from './MoroccanDecor.tsx';
+import { DifficultyLevel, ParentSettings, Word } from '../types.ts';
+import { SceneManager } from '../engine/SceneManager.ts';
+import { DiscoveryScene } from '../engine/scenes/DiscoveryScene.ts';
+import { CelebrationModal, SpeakerIcon, StarIcon } from './MoroccanDecor.tsx';
 import { speakWord } from '../services/audioService.ts';
 import {
   playFanfareSound,
@@ -12,206 +12,182 @@ import {
 } from '../services/soundService.ts';
 
 interface DiscoveryGameProps {
-  ageMode: AgeMode;
+  sceneManager: SceneManager | null;
+  difficulty: DifficultyLevel;
   settings: ParentSettings;
   onReward: (stars: number, wordId?: string) => Word | null;
   onHome: () => void;
 }
 
 export const DiscoveryGame: React.FC<DiscoveryGameProps> = ({
-  ageMode,
+  sceneManager,
+  difficulty,
   settings,
   onReward,
   onHome,
 }) => {
-  const isLittle = ageMode === 'little';
-  const totalRounds = isLittle ? 4 : 5;
-  const choiceCount = isLittle ? 2 : 4;
+  const totalRounds = difficulty === 1 ? 4 : 5;
+  const choiceCount = difficulty === 1 ? 2 : difficulty === 2 ? 4 : 6;
 
-  const [roundQueue, setRoundQueue] = useState<Word[]>([]);
   const [roundIdx, setRoundIdx] = useState(0);
-  const [options, setOptions] = useState<Word[]>([]);
-  const [wrongIds, setWrongIds] = useState<string[]>([]);
-  const [wiggleId, setWiggleId] = useState<string | null>(null);
+  const [targetWord, setTargetWord] = useState<Word | null>(null);
   const [solved, setSolved] = useState(false);
   const [showPeek, setShowPeek] = useState(false);
   const [finished, setFinished] = useState(false);
   const [unlockedSticker, setUnlockedSticker] = useState<Word | null>(null);
 
+  const sceneRef = useRef<DiscoveryScene | null>(null);
+  const queueRef = useRef<Word[]>([]);
+  const roundRef = useRef(0);
+  const solvedRef = useRef(false);
   const timersRef = useRef<number[]>([]);
+
   const addTimer = (fn: () => void, ms: number) => {
     const id = window.setTimeout(fn, ms);
     timersRef.current.push(id);
   };
 
-  const setupRound = useCallback((queue: Word[], idx: number) => {
-    const target = queue[idx];
-    if (!target) return;
-    const distractors = shuffleArray(WORDS.filter((w) => w.id !== target.id)).slice(
-      0,
-      choiceCount - 1
-    );
-    setOptions(shuffleArray([target, ...distractors]));
-    setWrongIds([]);
-    setWiggleId(null);
-    setSolved(false);
-    setShowPeek(false);
+  const makeChoices = useCallback(
+    (target: Word) => {
+      const distractors = shuffleArray(WORDS.filter((w) => w.id !== target.id)).slice(
+        0,
+        choiceCount - 1
+      );
+      return shuffleArray([target, ...distractors]);
+    },
+    [choiceCount]
+  );
 
-    addTimer(() => {
-      speakWord(target);
-    }, 320);
-  }, [choiceCount]);
-
-  const startNewGame = useCallback(() => {
+  const startGame = useCallback(() => {
     timersRef.current.forEach((t) => window.clearTimeout(t));
     timersRef.current = [];
     const queue = shuffleArray(WORDS).slice(0, totalRounds);
-    setRoundQueue(queue);
+    queueRef.current = queue;
+    roundRef.current = 0;
+    solvedRef.current = false;
+
+    const first = queue[0];
     setRoundIdx(0);
+    setTargetWord(first);
+    setSolved(false);
+    setShowPeek(false);
     setFinished(false);
     setUnlockedSticker(null);
-    setupRound(queue, 0);
-  }, [setupRound, totalRounds]);
+
+    if (sceneManager && first) {
+      const scene = new DiscoveryScene(makeChoices(first), (picked) => {
+        const target = queueRef.current[roundRef.current];
+        if (!target || solvedRef.current) return 'ignore';
+
+        if (picked.id === target.id) {
+          solvedRef.current = true;
+          setSolved(true);
+          playSuccessSound();
+          speakWord(target);
+
+          if (roundRef.current + 1 >= totalRounds) {
+            addTimer(() => {
+              playFanfareSound();
+              sceneManager.triggerCelebration();
+              const sticker = onReward(difficulty + 1, target.id);
+              setUnlockedSticker(sticker);
+              setFinished(true);
+            }, 1150);
+          } else {
+            addTimer(() => {
+              roundRef.current += 1;
+              const next = queueRef.current[roundRef.current];
+              setRoundIdx(roundRef.current);
+              setTargetWord(next);
+              setSolved(false);
+              setShowPeek(false);
+              solvedRef.current = false;
+              if (next) {
+                scene.setChoices(makeChoices(next));
+                scene.setTargetWordId(next.id);
+                speakWord(next);
+              }
+            }, 1250);
+          }
+          return 'correct';
+        } else {
+          playGentleBoing();
+          return 'wrong';
+        }
+      });
+      scene.setTargetWordId(first.id);
+      sceneRef.current = scene;
+      sceneManager.setScene(scene);
+      addTimer(() => speakWord(first), 380);
+    }
+  }, [difficulty, makeChoices, onReward, sceneManager, totalRounds]);
 
   useEffect(() => {
-    startNewGame();
+    startGame();
     return () => {
       timersRef.current.forEach((t) => window.clearTimeout(t));
+      sceneRef.current = null;
     };
-  }, [startNewGame]);
-
-  const targetWord = roundQueue[roundIdx] || null;
-
-  const handleChoice = (choice: Word) => {
-    if (!targetWord || solved || finished) return;
-
-    if (choice.id === targetWord.id) {
-      setSolved(true);
-      playSuccessSound();
-      speakWord(targetWord);
-
-      if (roundIdx + 1 >= totalRounds) {
-        addTimer(() => {
-          playFanfareSound();
-          const sticker = onReward(isLittle ? 2 : 3, targetWord.id);
-          setUnlockedSticker(sticker);
-          setFinished(true);
-        }, 1150);
-      } else {
-        addTimer(() => {
-          const next = roundIdx + 1;
-          setRoundIdx(next);
-          setupRound(roundQueue, next);
-        }, 1250);
-      }
-    } else {
-      playGentleBoing();
-      setWiggleId(choice.id);
-      setWrongIds((prev) => (prev.includes(choice.id) ? prev : [...prev, choice.id]));
-      addTimer(() => setWiggleId(null), 500);
-    }
-  };
-
-  if (!targetWord) return null;
+  }, [startGame]);
 
   return (
-    <div className="h-full flex flex-col gap-4 items-center justify-between">
-      {/* Top Sba3 Audio Prompt Banner */}
-      <div className="w-full max-w-3xl bg-white/95 border-4 border-majorelle-400/40 rounded-[2rem] px-4 sm:px-6 py-3 flex items-center justify-between gap-3 shadow-md flex-shrink-0">
-        <div className="flex items-center gap-3 sm:gap-4">
-          <Mascot
-            mood={solved ? 'cheering' : 'listening'}
-            size={68}
-            onClick={() => speakWord(targetWord)}
-          />
-          <div>
+    <div className="pointer-events-none h-full flex flex-col justify-between">
+      <div className="pointer-events-auto bg-white/85 backdrop-blur-md border-2 border-white rounded-3xl px-4 sm:px-5 py-2 shadow-lg flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center flex-wrap gap-2.5">
+          {targetWord && (
             <button
               onClick={() => speakWord(targetWord)}
-              className="flex items-center gap-2 bg-majorelle-500 hover:bg-majorelle-600 text-white font-kids text-xl sm:text-2xl px-5 py-2.5 rounded-2xl border-b-4 border-majorelle-600 active:translate-y-0.5 active:border-b-0 shadow-md transition-all"
+              aria-label="Replay spoken target word"
+              className="flex items-center gap-2 bg-majorelle-500 hover:bg-majorelle-600 text-white font-kids text-base sm:text-xl px-4 py-2 rounded-2xl border-b-4 border-majorelle-600 active:translate-y-0.5 active:border-b-0 shadow"
             >
-              <span>🔊</span>
-              <span>Tap to Listen!</span>
+              <SpeakerIcon className="w-6 h-6" />
+              {showPeek && <span>{targetWord.darija}</span>}
             </button>
-            <div className="mt-1.5 flex items-center gap-2">
-              <button
-                onClick={() => setShowPeek((p) => !p)}
-                className="text-xs font-extrabold uppercase tracking-wider text-amber-700 bg-amber-100 px-3 py-1 rounded-full"
-              >
-                {showPeek
-                  ? `${targetWord.darija}${settings.showArabic ? ` • ${targetWord.arabic}` : ''}${settings.showEnglish ? ` (${targetWord.english})` : ''}`
-                  : '👀 Parent Word Peek'}
-              </button>
-            </div>
-          </div>
+          )}
+          {targetWord && (
+            <button
+              onClick={() => setShowPeek((p) => !p)}
+              aria-label="Toggle word hint for parents"
+              className="text-xs font-extrabold uppercase tracking-wider bg-amber-100 text-amber-900 px-3 py-1.5 rounded-full"
+            >
+              {showPeek
+                ? `${targetWord.arabic}${settings.showEnglish ? ` (${targetWord.english})` : ''}`
+                : '?'}
+            </button>
+          )}
         </div>
 
-        {/* Round Stars */}
-        <div className="flex items-center gap-1 sm:gap-1.5">
+        <div className="flex items-center gap-1">
           {Array.from({ length: totalRounds }).map((_, i) => (
-            <span
+            <StarIcon
               key={i}
-              className={`text-xl sm:text-2xl transition-all ${
-                i < roundIdx || (i === roundIdx && solved)
-                  ? 'scale-110'
-                  : 'opacity-25 grayscale'
-              }`}
-            >
-              ⭐
-            </span>
+              filled={i < roundIdx || (i === roundIdx && solved)}
+              className="w-6 h-6"
+            />
           ))}
         </div>
       </div>
 
-      {/* Big Illustrated Choice Grid (2 huge cards for 2+, 4 cards for 4+) */}
-      <div
-        className={`flex-1 min-h-0 w-full max-w-3xl grid grid-cols-2 gap-4 sm:gap-6 items-center content-center`}
-      >
-        {options.map((opt) => {
-          const isCorrect = solved && opt.id === targetWord.id;
-          const isWrong = wrongIds.includes(opt.id);
-          const isWiggling = wiggleId === opt.id;
-
-          return (
-            <button
-              key={opt.id}
-              type="button"
-              onClick={() => handleChoice(opt)}
-              aria-label={opt.english}
-              className={`relative w-full ${
-                isLittle ? 'aspect-square max-h-[46vh]' : 'aspect-[4/3] max-h-[29vh]'
-              } rounded-[2rem] border-8 p-4 flex flex-col items-center justify-center shadow-lg transition-all active:scale-95 focus:outline-none ${
-                isCorrect
-                  ? 'border-emerald-400 scale-105 ring-4 ring-emerald-300 shadow-xl'
-                  : isWrong
-                  ? 'border-rose-200 opacity-45 scale-95'
-                  : 'border-white hover:border-saffron-300 hover:scale-[1.02]'
-              } ${isWiggling ? 'animate-wiggle' : ''}`}
-              style={{ backgroundColor: opt.bgHex }}
-            >
-              <WordIllustration wordId={opt.id} className="w-[78%] h-[78%] drop-shadow-sm" />
-
-              {isCorrect && (
-                <div className="absolute inset-x-3 bottom-3 bg-emerald-500 text-white font-kids text-lg sm:text-2xl py-1 px-3 rounded-2xl shadow-md animate-pop flex items-center justify-center gap-2">
-                  <span>🌟</span>
-                  <span>{opt.darija}</span>
-                  {settings.showArabic && (
-                    <span className="font-arabic font-bold" dir="rtl">
-                      {opt.arabic}
-                    </span>
-                  )}
-                </div>
-              )}
-            </button>
-          );
-        })}
+      {/* Solved Word Celebration Pill */}
+      <div className="pointer-events-none flex justify-center pb-2">
+        {solved && targetWord && (
+          <div className="bg-emerald-500 text-white border-4 border-white rounded-full px-6 py-2 shadow-xl flex items-center gap-3 animate-pop">
+            <span className="font-kids text-2xl sm:text-3xl">{targetWord.darija}</span>
+            {settings.showArabic && (
+              <span className="font-arabic text-2xl font-bold" dir="rtl">
+                {targetWord.arabic}
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {finished && (
         <CelebrationModal
-          starsEarned={isLittle ? 2 : 3}
+          starsEarned={difficulty + 1}
           unlockedWord={unlockedSticker}
           showArabic={settings.showArabic}
-          onPlayAgain={startNewGame}
+          onPlayAgain={startGame}
           onHome={onHome}
         />
       )}

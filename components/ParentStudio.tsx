@@ -137,7 +137,7 @@ export const ParentStudio: React.FC<ParentStudioProps> = ({
   const geminiEnabled = hasGeminiApiKey();
 
   return (
-    <div className="h-full flex flex-col gap-4 pb-6">
+    <div className="pointer-events-auto h-full overflow-y-auto bg-sand-50/95 backdrop-blur-md rounded-[2rem] border-4 border-white p-4 sm:p-5 flex flex-col gap-4 pb-6 shadow-2xl">
       {/* Header Banner */}
       <div className="bg-white border-4 border-slate-200 rounded-3xl p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3 shadow-sm">
         <div>

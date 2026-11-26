@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { AgeMode } from '../types.ts';
-import { ZelligeBorder } from './MoroccanDecor.tsx';
-import { Mascot } from './Mascot.tsx';
+import React, { useState, useEffect, useRef } from 'react';
+import { AgeMode, DifficultyLevel } from '../types.ts';
+import { StarIcon, ZelligeBorder } from './MoroccanDecor.tsx';
 import { ExplorerAvatar } from './ExplorerAvatar.tsx';
+import { HoldGateButton } from './ParentGateButton.tsx';
 import { playClickSound, playGentleBoing, playSuccessSound } from '../services/soundService.ts';
 
 interface LayoutProps {
@@ -11,8 +11,15 @@ interface LayoutProps {
   showHomeButton?: boolean;
   stars: number;
   ageMode: AgeMode;
+  difficulty: DifficultyLevel;
+  showGyroButton?: boolean;
+  gyroEnabled?: boolean;
+  onEnableGyro?: () => void;
+  sfxEnabled?: boolean;
+  onToggleSfx?: () => void;
   onHomeClick: () => void;
-  onAgeModeChange: (mode: AgeMode) => void;
+  onProfileSelect: (mode: AgeMode, difficulty: DifficultyLevel) => void;
+  onDifficultyChange: (level: DifficultyLevel) => void;
   onStickersClick: () => void;
   onParentOpen: () => void;
   hideChromeControls?: boolean;
@@ -25,18 +32,15 @@ interface MathChallenge {
 }
 
 function createMathChallenge(): MathChallenge {
-  // Multiplication challenge: easy & instant for grown-ups, safe from toddlers/4-year-olds
-  const a = 4 + Math.floor(Math.random() * 6); // 4..9
-  const b = 3 + Math.floor(Math.random() * 7); // 3..9
+  const a = 4 + Math.floor(Math.random() * 6);
+  const b = 3 + Math.floor(Math.random() * 7);
   const answer = a * b;
 
   const wrongSet = new Set<number>();
   const offsets = [-6, -4, -3, -2, -1, 1, 2, 3, 4, 6, 8];
   while (wrongSet.size < 3) {
     const candidate = answer + offsets[Math.floor(Math.random() * offsets.length)];
-    if (candidate > 0 && candidate !== answer) {
-      wrongSet.add(candidate);
-    }
+    if (candidate > 0 && candidate !== answer) wrongSet.add(candidate);
   }
 
   const choices = [answer, ...Array.from(wrongSet)];
@@ -44,28 +48,75 @@ function createMathChallenge(): MathChallenge {
     const j = Math.floor(Math.random() * (i + 1));
     [choices[i], choices[j]] = [choices[j], choices[i]];
   }
-
-  return {
-    question: `${a} × ${b} = ?`,
-    answer,
-    choices,
-  };
+  return { question: `${a} × ${b} = ?`, answer, choices };
 }
 
+/**
+ * Floating translucent HUD shell positioned above the full-bleed 3D WebGL Stage3D.
+ * Pointer events pass directly through empty areas to the 3D scene below!
+ */
 export const Layout: React.FC<LayoutProps> = ({
   children,
   title,
   showHomeButton = false,
   stars,
   ageMode,
+  difficulty,
+  showGyroButton = false,
+  gyroEnabled = false,
+  onEnableGyro,
+  sfxEnabled = true,
+  onToggleSfx,
   onHomeClick,
-  onAgeModeChange,
+  onProfileSelect,
+  onDifficultyChange,
   onStickersClick,
   onParentOpen,
   hideChromeControls = false,
 }) => {
   const [mathGate, setMathGate] = useState<MathChallenge | null>(null);
   const [gateWrong, setGateWrong] = useState(false);
+  const twoFingerStartRef = useRef<{ avgY: number; triggered: boolean } | null>(null);
+
+  // Two-finger downward swipe (> 110px) parent shortcut to safely exit an active game to Home
+  useEffect(() => {
+    if (!showHomeButton) return;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        const avgY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+        twoFingerStartRef.current = { avgY, triggered: false };
+      } else {
+        twoFingerStartRef.current = null;
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      const state = twoFingerStartRef.current;
+      if (!state || state.triggered || e.touches.length !== 2) return;
+      const avgY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+      if (avgY - state.avgY >= 115) {
+        state.triggered = true;
+        playSuccessSound();
+        onHomeClick();
+      }
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (e.touches.length < 2) {
+        twoFingerStartRef.current = null;
+      }
+    };
+
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
+    window.addEventListener('touchend', handleTouchEnd, { passive: true });
+    return () => {
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [showHomeButton, onHomeClick]);
 
   const openMathGate = () => {
     playClickSound();
@@ -92,7 +143,7 @@ export const Layout: React.FC<LayoutProps> = ({
 
   return (
     <div
-      className="relative h-full w-full flex flex-col bg-moroccan-paper overflow-hidden"
+      className="pointer-events-none relative z-10 h-full w-full flex flex-col overflow-hidden"
       style={{
         paddingTop: 'env(safe-area-inset-top)',
         paddingBottom: 'env(safe-area-inset-bottom)',
@@ -100,137 +151,192 @@ export const Layout: React.FC<LayoutProps> = ({
         paddingRight: 'env(safe-area-inset-right)',
       }}
     >
-      {/* Ambient Living Sunlit Clouds in Background */}
-      <div className="pointer-events-none fixed inset-0 overflow-hidden opacity-45 z-0" aria-hidden="true">
-        <svg className="absolute top-20 left-6 w-28 h-16 animate-cloud-drift" viewBox="0 0 120 60">
-          <path d="M24 50 C10 50 8 32 22 28 C24 12 48 8 58 20 C68 10 92 14 94 30 C110 32 108 50 92 50 Z" fill="#FFFFFF" />
-        </svg>
-        <svg className="absolute top-28 right-10 w-36 h-20 animate-cloud-drift" style={{ animationDelay: '-4s' }} viewBox="0 0 120 60">
-          <path d="M24 50 C10 50 8 32 22 28 C24 12 48 8 58 20 C68 10 92 14 94 30 C110 32 108 50 92 50 Z" fill="#FFFFFF" />
-        </svg>
-      </div>
+      <ZelligeBorder className="pointer-events-auto" />
 
-      <ZelligeBorder className="relative z-20" />
-
-      {/* Responsive iPad Header */}
-      <header className="relative w-full bg-white/95 backdrop-blur-md border-b-4 border-amber-200/80 px-4 sm:px-6 py-2 flex items-center justify-between gap-2 z-20 flex-shrink-0 shadow-sm">
-        <div className="flex items-center gap-3 min-w-0">
+      {/* Sleek Frosted Glass iPad HUD Header (Parent-Gated 1.5s Hold Navigation!) */}
+      <header className="pointer-events-auto relative z-30 w-full bg-white/80 backdrop-blur-md border-b-2 border-white/70 px-3.5 sm:px-5 py-2 flex items-center justify-between gap-2 flex-shrink-0 shadow-sm">
+        <div className="flex items-center gap-2.5 min-w-0">
           {showHomeButton ? (
-            <button
-              onClick={() => {
-                playClickSound();
-                onHomeClick();
-              }}
-              aria-label="Back to Home"
-              className="flex items-center gap-2 bg-amber-100 hover:bg-amber-200 text-amber-800 font-kids text-lg sm:text-xl px-4 py-2 rounded-2xl border-b-4 border-amber-300 active:translate-y-0.5 active:border-b-0 transition-all"
+            <HoldGateButton
+              onComplete={onHomeClick}
+              gated={true}
+              ariaLabel="Back to Home"
+              ringColor="#D97706"
+              className="flex items-center gap-2 bg-amber-100 hover:bg-amber-200 text-amber-900 font-kids text-base sm:text-lg px-3.5 py-2 rounded-2xl border-b-4 border-amber-300 transition-all"
             >
-              <svg viewBox="0 0 36 36" className="w-6 h-6" aria-hidden="true">
-                <path d="M5 17 L18 5 L31 17 L27 17 L27 30 L21 30 L21 22 L15 22 L15 30 L9 30 L9 17 Z" fill="#D97706" stroke="#78350F" strokeWidth="2.2" strokeLinejoin="round" />
+              <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor" aria-hidden="true">
+                <path d="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z" />
               </svg>
               <span className="hidden sm:inline">Home</span>
-            </button>
+            </HoldGateButton>
           ) : (
-            <button
-              onClick={onHomeClick}
-              className="flex items-center gap-2 text-left focus:outline-none group"
-            >
-              <Mascot mood="happy" size={44} />
+            <div className="flex items-center gap-2">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-terracotta-500 flex items-center justify-center shadow text-white font-kids text-lg">
+                DF
+              </div>
               <div>
-                <h1 className="font-kids text-2xl sm:text-3xl text-terracotta-500 leading-none tracking-tight">
-                  Darija Fun!
+                <h1 className="font-kids text-xl sm:text-2xl text-terracotta-600 leading-none tracking-tight">
+                  Darija Fun 3D
                 </h1>
-                <span className="hidden md:inline-block text-[11px] font-extrabold uppercase tracking-wider text-amber-600/80">
+                <span className="hidden md:inline-block text-[10px] font-extrabold uppercase tracking-wider text-amber-700/80">
                   Nora &amp; Sophia&apos;s Playworld
                 </span>
               </div>
-            </button>
+            </div>
           )}
 
           {title && showHomeButton && (
-            <h2 className="font-kids text-xl sm:text-2xl text-amber-800 truncate">
+            <h2 className="font-kids text-lg sm:text-2xl text-amber-900 truncate">
               {title}
             </h2>
           )}
         </div>
 
-        {/* Right Controls: Nora / Sophia Profile Switcher, Golden Stars, Grown-Up Math Gate */}
+        {/* Right HUD Controls: Parent-Gated Nora/Sophia + 3 Difficulty Levels + Stars + Math Lock */}
         {!hideChromeControls && (
-          <div className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0">
-            {/* Nora & Sophia Profile Switcher */}
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+            {/* Nora & Sophia Profile Toggle (1.5s Hold Gate prevents stray taps switching profile) */}
             <div
               className="flex items-center bg-amber-100/90 p-1 rounded-2xl border-2 border-amber-200 gap-1"
               role="group"
               aria-label="Choose Nora or Sophia"
             >
-              <button
-                onClick={() => {
-                  playClickSound();
-                  onAgeModeChange('little');
-                }}
-                className={`pl-1.5 pr-3 py-1 rounded-xl font-kids text-sm sm:text-base transition-all flex items-center gap-1.5 ${
+              <HoldGateButton
+                onComplete={() => onProfileSelect('little', 1)}
+                gated={ageMode !== 'little'}
+                ariaLabel="Switch to Nora"
+                ringColor="#F59E0B"
+                className={`pl-1 pr-2.5 py-1 rounded-xl font-kids text-sm sm:text-base transition-all flex items-center gap-1.5 ${
                   ageMode === 'little'
                     ? 'bg-saffron-400 text-amber-950 shadow-sm'
-                    : 'text-amber-700 hover:bg-amber-200/60'
+                    : 'text-amber-800 hover:bg-amber-200/60'
                 }`}
               >
-                <ExplorerAvatar profile="little" size={26} />
+                <ExplorerAvatar profile="little" size={24} />
                 <span>Nora</span>
-              </button>
-              <button
-                onClick={() => {
-                  playClickSound();
-                  onAgeModeChange('big');
-                }}
-                className={`pl-1.5 pr-3 py-1 rounded-xl font-kids text-sm sm:text-base transition-all flex items-center gap-1.5 ${
+              </HoldGateButton>
+              <HoldGateButton
+                onComplete={() => onProfileSelect('big', difficulty === 3 ? 3 : 2)}
+                gated={ageMode !== 'big'}
+                ariaLabel="Switch to Sophia"
+                ringColor="#1D5FD1"
+                className={`pl-1 pr-2.5 py-1 rounded-xl font-kids text-sm sm:text-base transition-all flex items-center gap-1.5 ${
                   ageMode === 'big'
                     ? 'bg-majorelle-500 text-white shadow-sm'
-                    : 'text-amber-700 hover:bg-amber-200/60'
+                    : 'text-amber-800 hover:bg-amber-200/60'
                 }`}
               >
-                <ExplorerAvatar profile="big" size={26} />
+                <ExplorerAvatar profile="big" size={24} />
                 <span>Sophia</span>
-              </button>
+              </HoldGateButton>
             </div>
 
-            {/* Golden Stars / Sticker Oasis Shortcut */}
-            <button
-              onClick={() => {
-                playClickSound();
-                onStickersClick();
-              }}
-              aria-label="Open Sticker Oasis"
-              className="flex items-center gap-1.5 bg-amber-50 hover:bg-amber-100 border-2 border-saffron-400 px-3 sm:px-3.5 py-1.5 rounded-2xl shadow-sm active:scale-95 transition-transform"
+            {/* 3 Progressive Difficulty Levels (1.5s Hold Gate prevents accidental resets mid-game) */}
+            <div
+              className="hidden sm:flex items-center bg-slate-100/90 p-1 rounded-2xl border-2 border-slate-200 gap-0.5"
+              role="group"
+              aria-label="Difficulty level"
             >
-              <svg viewBox="0 0 32 32" className="w-6 h-6" aria-hidden="true">
-                <polygon points="16,3 20,12 30,13 22,19 25,29 16,24 7,29 10,19 2,13 12,12" fill="#FBBF24" stroke="#B45309" strokeWidth="2" strokeLinejoin="round" />
-              </svg>
-              <span className="font-kids text-lg sm:text-xl text-amber-700">{stars}</span>
-            </button>
+              {([1, 2, 3] as DifficultyLevel[]).map((lv) => (
+                <HoldGateButton
+                  key={lv}
+                  onComplete={() => onDifficultyChange(lv)}
+                  gated={difficulty !== lv}
+                  ariaLabel={`Difficulty Level ${lv}`}
+                  ringColor="#14A392"
+                  className={`px-2 py-1 rounded-xl font-kids text-xs transition-all ${
+                    difficulty === lv
+                      ? 'bg-minttile-500 text-white shadow-sm'
+                      : 'text-slate-600 hover:bg-slate-200/70'
+                  }`}
+                >
+                  Lv {lv}
+                </HoldGateButton>
+              ))}
+            </div>
+
+            {/* Optional iPad Safari 3D Tilt Gyroscope Permission Pill */}
+            {showGyroButton && !gyroEnabled && onEnableGyro && (
+              <button
+                type="button"
+                onClick={() => {
+                  playClickSound();
+                  onEnableGyro();
+                }}
+                aria-label="Enable 3D Tilt Gyroscope"
+                className="bg-sky-100 hover:bg-sky-200 border-2 border-sky-300 text-sky-800 px-2.5 py-1.5 rounded-2xl text-xs font-extrabold uppercase tracking-wide active:scale-95 transition-transform"
+              >
+                3D Tilt
+              </button>
+            )}
+
+            {/* Quick Sound FX Mute / Unmute Toggle (independent of Darija voice!) */}
+            {onToggleSfx && (
+              <button
+                type="button"
+                onClick={onToggleSfx}
+                aria-label={sfxEnabled ? 'Mute sound effects' : 'Unmute sound effects'}
+                title={sfxEnabled ? 'SFX On (tap to mute)' : 'SFX Muted (tap to unmute)'}
+                className={`p-2 rounded-2xl border-2 active:scale-95 transition-all ${
+                  sfxEnabled
+                    ? 'bg-emerald-50 hover:bg-emerald-100 border-emerald-300 text-emerald-700'
+                    : 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-400'
+                }`}
+              >
+                {sfxEnabled ? (
+                  <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" />
+                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" />
+                    <line x1="23" y1="9" x2="17" y2="15" />
+                    <line x1="17" y1="9" x2="23" y2="15" />
+                  </svg>
+                )}
+              </button>
+            )}
+
+            {/* Star Counter (Gated while inside an active game so stray taps never exit mid-round) */}
+            <HoldGateButton
+              onComplete={onStickersClick}
+              gated={showHomeButton}
+              ariaLabel="Open 3D Sticker Oasis"
+              ringColor="#F59E0B"
+              className="flex items-center gap-1.5 bg-amber-50 hover:bg-amber-100 border-2 border-saffron-400 px-3 py-1.5 rounded-2xl shadow-sm transition-transform"
+            >
+              <StarIcon className="w-5 h-5" />
+              <span className="font-kids text-base sm:text-lg text-amber-800">{stars}</span>
+            </HoldGateButton>
 
             {/* Grown-Up Math Gate Button */}
             <button
               type="button"
               onClick={openMathGate}
-              title="Grown-Up Studio (Voice Recorder & Settings)"
               aria-label="Open Grown-Up Parent Studio"
-              className="bg-slate-100 hover:bg-slate-200 border-2 border-slate-300 text-slate-600 px-3 py-2 rounded-2xl text-sm font-bold flex items-center gap-1.5 active:scale-95 transition-transform select-none"
+              className="bg-slate-100 hover:bg-slate-200 border-2 border-slate-300 text-slate-700 px-2.5 sm:px-3 py-2 rounded-2xl text-xs font-extrabold uppercase tracking-wide flex items-center gap-1.5 active:scale-95 transition-transform"
             >
-              <span className="text-base">🔒</span>
-              <span className="hidden lg:inline text-xs uppercase tracking-wide">Parents</span>
+              <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.4" aria-hidden="true">
+                <rect x="5" y="11" width="14" height="10" rx="2" />
+                <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+              </svg>
+              <span className="hidden lg:inline">Parents</span>
             </button>
           </div>
         )}
       </header>
 
-      {/* Main Responsive Stage */}
-      <main className="relative z-10 flex-1 min-h-0 w-full max-w-6xl mx-auto px-4 sm:px-6 py-3.5 overflow-y-auto overflow-x-hidden">
+      {/* Transparent HUD Layer over the live 3D Canvas */}
+      <main className="pointer-events-none flex-1 min-h-0 w-full max-w-6xl mx-auto px-3 sm:px-5 py-2.5 flex flex-col justify-between overflow-hidden">
         {children}
       </main>
 
       {/* Grown-Up Math Gate Modal */}
       {mathGate && (
         <div
-          className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4"
+          className="pointer-events-auto fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4"
           onClick={() => setMathGate(null)}
         >
           <div
@@ -239,9 +345,6 @@ export const Layout: React.FC<LayoutProps> = ({
               gateWrong ? 'animate-wiggle border-rose-400' : ''
             }`}
           >
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-slate-100 text-3xl mb-2">
-              🔒
-            </div>
             <h3 className="font-kids text-2xl text-slate-800">For Grown-Ups Only</h3>
             <p className="text-sm font-bold text-slate-500 mt-1">
               Solve to open Parent Voice Studio &amp; Settings:

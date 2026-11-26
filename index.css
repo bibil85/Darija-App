@@ -18,12 +18,20 @@
     margin: 0;
     padding: 0;
     overflow: hidden;
+    overscroll-behavior: none;
     background-color: #FFF7E6;
     font-family: 'Nunito', 'Quicksand', system-ui, sans-serif;
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
+    -webkit-user-select: none;
     user-select: none;
-    touch-action: manipulation;
+    touch-action: none;
+  }
+
+  /* Explicitly allow clean horizontal scrolling inside horizontal category/toy trays */
+  .allow-scroll-x {
+    touch-action: pan-x;
+    overscroll-behavior-x: contain;
   }
 }
 

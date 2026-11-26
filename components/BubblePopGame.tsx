@@ -1,279 +1,178 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { WORDS, shuffleArray } from '../constants.ts';
-import { AgeMode, ParentSettings, Word } from '../types.ts';
-import { WordIllustration } from './WordIllustration.tsx';
-import { CelebrationModal } from './MoroccanDecor.tsx';
+import { DifficultyLevel, ParentSettings, Word } from '../types.ts';
+import { SceneManager } from '../engine/SceneManager.ts';
+import { BubblePopScene } from '../engine/scenes/BubblePopScene.ts';
+import { CelebrationModal, SpeakerIcon, StarIcon } from './MoroccanDecor.tsx';
 import { speakWord } from '../services/audioService.ts';
 import {
   playFanfareSound,
-  playGentleBoing,
-  playPopSound,
   playSuccessSound,
 } from '../services/soundService.ts';
 
-interface BubbleItem {
-  uid: number;
-  word: Word;
-  x: number; // % 12..88
-  y: number; // % 0..108
-  speed: number; // % per second
-  swayPhase: number;
-  size: number; // px
-  tint: string;
-}
-
-interface PopBurst {
-  id: number;
-  x: number;
-  y: number;
-  word: Word;
-}
-
 interface BubblePopGameProps {
-  ageMode: AgeMode;
+  sceneManager: SceneManager | null;
+  difficulty: DifficultyLevel;
   settings: ParentSettings;
   onReward: (stars: number, wordId?: string) => Word | null;
   onHome: () => void;
 }
 
-const BUBBLE_TINTS = [
-  'rgba(255, 255, 255, 0.85)',
-  'rgba(254, 243, 199, 0.88)',
-  'rgba(224, 242, 254, 0.88)',
-  'rgba(252, 231, 243, 0.88)',
-  'rgba(209, 250, 229, 0.88)',
-];
-
 export const BubblePopGame: React.FC<BubblePopGameProps> = ({
-  ageMode,
+  sceneManager,
+  difficulty,
   settings,
   onReward,
   onHome,
 }) => {
-  const isLittle = ageMode === 'little';
-  const targetGoal = isLittle ? 8 : 5;
+  const isFreePlay = difficulty === 1; // Lv 1 (Nora) = Free Pop & Hear! Lv 2/3 = Target Pop!
+  const targetGoal = difficulty === 1 ? 7 : difficulty === 2 ? 5 : 7;
+  const bubbleCount = difficulty === 1 ? 6 : difficulty === 2 ? 7 : 8;
+  const speedScale = difficulty === 1 ? 0.85 : difficulty === 2 ? 1.15 : 1.45;
 
-  const [bubbles, setBubbles] = useState<BubbleItem[]>([]);
   const [poppedCount, setPoppedCount] = useState(0);
   const [lastPopped, setLastPopped] = useState<Word | null>(null);
-  const [bursts, setBursts] = useState<PopBurst[]>([]);
   const [targetWord, setTargetWord] = useState<Word | null>(null);
   const [showHint, setShowHint] = useState(false);
   const [finished, setFinished] = useState(false);
   const [unlockedSticker, setUnlockedSticker] = useState<Word | null>(null);
 
-  const nextUidRef = useRef(1);
-  const rafRef = useRef<number | null>(null);
-  const lastTimeRef = useRef<number>(0);
+  const sceneRef = useRef<BubblePopScene | null>(null);
+  const targetRef = useRef<Word | null>(null);
+  const countRef = useRef(0);
+  const finishedRef = useRef(false);
   const timersRef = useRef<number[]>([]);
+
+  targetRef.current = targetWord;
+  countRef.current = poppedCount;
+  finishedRef.current = finished;
 
   const addTimer = (fn: () => void, ms: number) => {
     const id = window.setTimeout(fn, ms);
     timersRef.current.push(id);
   };
 
-  const makeBubble = useCallback((word: Word, startY?: number): BubbleItem => {
-    const uid = nextUidRef.current++;
-    return {
-      uid,
-      word,
-      x: 14 + Math.random() * 72,
-      y: startY ?? 95 + Math.random() * 20,
-      speed: (isLittle ? 7 : 10) + Math.random() * 5,
-      swayPhase: Math.random() * Math.PI * 2,
-      size: isLittle ? 124 : 108,
-      tint: BUBBLE_TINTS[uid % BUBBLE_TINTS.length],
-    };
-  }, [isLittle]);
-
   const initGame = useCallback(() => {
     timersRef.current.forEach((t) => window.clearTimeout(t));
     timersRef.current = [];
     setPoppedCount(0);
     setLastPopped(null);
-    setBursts([]);
     setShowHint(false);
     setFinished(false);
     setUnlockedSticker(null);
 
-    const pool = shuffleArray(WORDS).slice(0, isLittle ? 6 : 7);
-    const initial = pool.map((w, i) => makeBubble(w, 22 + ((i * 15) % 72)));
-    setBubbles(initial);
+    const initialWords = shuffleArray(WORDS).slice(0, bubbleCount);
 
-    if (!isLittle) {
-      const firstTarget = initial[0].word;
+    if (!isFreePlay) {
+      const firstTarget = initialWords[0];
       setTargetWord(firstTarget);
-      addTimer(() => {
-        speakWord(firstTarget);
-      }, 350);
+      targetRef.current = firstTarget;
+      addTimer(() => speakWord(firstTarget), 380);
     } else {
       setTargetWord(null);
+      targetRef.current = null;
     }
-  }, [isLittle, makeBubble]);
+
+    if (sceneManager) {
+      const scene = new BubblePopScene(initialWords, WORDS, speedScale, {
+        onBubblePopped: (word) => {
+          if (finishedRef.current) return false;
+
+          if (!isFreePlay && targetRef.current && word.id !== targetRef.current.id) {
+            speakWord(word);
+            return false;
+          }
+
+          speakWord(word);
+          setLastPopped(word);
+
+          const nextCount = countRef.current + 1;
+          setPoppedCount(nextCount);
+          countRef.current = nextCount;
+
+          if (nextCount >= targetGoal) {
+            playSuccessSound();
+            finishedRef.current = true;
+            addTimer(() => {
+              playFanfareSound();
+              sceneManager.triggerCelebration();
+              const sticker = onReward(difficulty + 1, word.id);
+              setUnlockedSticker(sticker);
+              setFinished(true);
+            }, 650);
+          } else if (!isFreePlay) {
+            playSuccessSound();
+            addTimer(() => {
+              const active = scene.getActiveWords().filter((w) => w.id !== word.id);
+              const nextTarget = active[Math.floor(Math.random() * active.length)] || WORDS[0];
+              setTargetWord(nextTarget);
+              targetRef.current = nextTarget;
+              scene.setTargetWordId(nextTarget.id);
+              setShowHint(false);
+              speakWord(nextTarget);
+            }, 650);
+          }
+          return true;
+        },
+      });
+      scene.setTargetWordId(isFreePlay ? null : initialWords[0]?.id ?? null);
+      sceneRef.current = scene;
+      sceneManager.setScene(scene);
+    }
+  }, [bubbleCount, difficulty, isFreePlay, onReward, sceneManager, speedScale, targetGoal]);
 
   useEffect(() => {
     initGame();
     return () => {
       timersRef.current.forEach((t) => window.clearTimeout(t));
+      sceneRef.current = null;
     };
   }, [initGame]);
 
-  // Smooth gentle floating animation loop
-  useEffect(() => {
-    if (finished) return;
-    lastTimeRef.current = performance.now();
-
-    const tick = (now: number) => {
-      const dt = Math.min(0.05, (now - lastTimeRef.current) / 1000);
-      lastTimeRef.current = now;
-
-      setBubbles((prev) =>
-        prev.map((b) => {
-          let nextY = b.y - b.speed * dt;
-          let nextX = b.x + Math.sin(now / 750 + b.swayPhase) * 4.5 * dt;
-          nextX = Math.max(10, Math.min(90, nextX));
-          if (nextY < 4) {
-            nextY = 104;
-            nextX = 14 + Math.random() * 72;
-          }
-          return { ...b, x: nextX, y: nextY };
-        })
-      );
-
-      rafRef.current = requestAnimationFrame(tick);
-    };
-
-    rafRef.current = requestAnimationFrame(tick);
-    return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    };
-  }, [finished]);
-
-  const handleBubblePop = (bubble: BubbleItem) => {
-    if (finished) return;
-
-    // 4+ Target Mode check
-    if (!isLittle && targetWord && bubble.word.id !== targetWord.id) {
-      playGentleBoing();
-      speakWord(bubble.word);
-      return;
-    }
-
-    playPopSound();
-    speakWord(bubble.word);
-    setLastPopped(bubble.word);
-
-    const burstId = Date.now() + Math.random();
-    setBursts((prev) => [...prev, { id: burstId, x: bubble.x, y: bubble.y, word: bubble.word }]);
-    addTimer(() => {
-      setBursts((prev) => prev.filter((b) => b.id !== burstId));
-    }, 850);
-
-    const nextCount = poppedCount + 1;
-    setPoppedCount(nextCount);
-
-    // Replace popped bubble with a fresh word not currently on screen
-    const replacementPool = shuffleArray(WORDS);
-    const replacementWord = replacementPool[0];
-
-    if (nextCount >= targetGoal) {
-      playSuccessSound();
-      addTimer(() => {
-        playFanfareSound();
-        const sticker = onReward(isLittle ? 2 : 3, bubble.word.id);
-        setUnlockedSticker(sticker);
-        setFinished(true);
-      }, 650);
-      setBubbles((prev) => prev.filter((b) => b.uid !== bubble.uid));
-      return;
-    }
-
-    if (!isLittle) {
-      playSuccessSound();
-      setBubbles((prev) => {
-        const remaining = prev.filter((b) => b.uid !== bubble.uid);
-        const fresh = makeBubble(replacementWord, 102);
-        const updated = [...remaining, fresh];
-        const nextTarget = updated[Math.floor(Math.random() * updated.length)].word;
-        setTargetWord(nextTarget);
-        setShowHint(false);
-        addTimer(() => speakWord(nextTarget), 750);
-        return updated;
-      });
-    } else {
-      setBubbles((prev) => [
-        ...prev.filter((b) => b.uid !== bubble.uid),
-        makeBubble(replacementWord, 102),
-      ]);
-    }
-  };
-
   return (
-    <div className="h-full flex flex-col gap-3">
-      {/* Top Instruction / Progress Strip */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-white/95 border-4 border-sky-200 rounded-3xl px-4 sm:px-6 py-3 shadow-sm flex-shrink-0">
-        {isLittle ? (
-          <div className="flex items-center gap-3">
-            <span className="text-3xl">🫧</span>
-            <div>
-              <h3 className="font-kids text-xl sm:text-2xl text-sky-700 leading-tight">
-                Pop any bubble!
-              </h3>
-              <p className="text-xs sm:text-sm font-bold text-slate-500">
-                Tap floating bubbles to hear Moroccan Darija!
-              </p>
-            </div>
+    <div className="pointer-events-none h-full flex flex-col justify-between">
+      {/* Top Visual HUD Bar — Zero-Text Signposting (Iconic Speaker + Star Slots!) */}
+      <div className="pointer-events-auto bg-white/85 backdrop-blur-md border-2 border-white rounded-3xl px-4 sm:px-5 py-2 shadow-lg flex flex-wrap items-center justify-between gap-2">
+        {isFreePlay ? (
+          <div className="flex items-center gap-2">
+            <span className="w-8 h-8 rounded-full bg-gradient-to-br from-sky-300 to-cyan-500 shadow-inner border-2 border-white inline-block animate-pulse" />
+            <span className="font-kids text-lg text-sky-800">{poppedCount} / {targetGoal}</span>
           </div>
         ) : (
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center flex-wrap gap-2">
             <button
               onClick={() => targetWord && speakWord(targetWord)}
-              className="flex items-center gap-2 bg-majorelle-500 hover:bg-majorelle-600 text-white font-kids text-lg sm:text-xl px-5 py-2.5 rounded-2xl border-b-4 border-majorelle-600 active:translate-y-0.5 active:border-b-0 shadow-md"
+              aria-label="Replay spoken bubble word"
+              className="flex items-center gap-2 bg-majorelle-500 hover:bg-majorelle-600 text-white font-kids text-base sm:text-lg px-4 py-2 rounded-2xl border-b-4 border-majorelle-600 active:translate-y-0.5 active:border-b-0 shadow"
             >
-              <span className="text-2xl">🔊</span>
-              <span>Hear Word</span>
+              <SpeakerIcon className="w-6 h-6" />
+              {showHint && targetWord && <span>{targetWord.darija}</span>}
             </button>
-            <span className="font-kids text-lg sm:text-xl text-sky-800">
-              Pop the matching bubble!
-            </span>
             {targetWord && (
               <button
                 onClick={() => setShowHint((h) => !h)}
-                className="text-xs font-extrabold uppercase tracking-wider bg-amber-100 text-amber-800 px-3 py-1.5 rounded-full"
+                aria-label="Toggle word hint for parents"
+                className="text-xs font-extrabold uppercase bg-amber-100 text-amber-900 px-3 py-1.5 rounded-full"
               >
-                {showHint ? `${targetWord.darija} (${targetWord.english})` : '👀 Peek'}
+                {showHint ? targetWord.english : '?'}
               </button>
             )}
           </div>
         )}
 
-        {/* Star Progress Bubbles */}
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1">
           {Array.from({ length: targetGoal }).map((_, i) => (
-            <span
-              key={i}
-              className={`text-xl sm:text-2xl transition-transform duration-300 ${
-                i < poppedCount ? 'scale-110' : 'opacity-25 grayscale'
-              }`}
-            >
-              ⭐
-            </span>
+            <StarIcon key={i} filled={i < poppedCount} className="w-6 h-6 transition-transform" />
           ))}
         </div>
       </div>
 
-      {/* Illustrated Moroccan Courtyard Sky Bubble Stage */}
-      <div className="relative flex-1 min-h-0 w-full rounded-[2.25rem] border-4 border-sky-300 bg-gradient-to-b from-sky-200 via-sky-100 to-amber-100 overflow-hidden shadow-inner">
-        {/* Decorative background clouds & Moroccan arch silhouette */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-amber-200/70 to-transparent" />
-        <div className="pointer-events-none absolute top-4 left-8 text-5xl opacity-35">☁️</div>
-        <div className="pointer-events-none absolute top-10 right-12 text-6xl opacity-30">☁️</div>
-
-        {/* Last Popped Big Word Callout */}
+      {/* Bottom Spoken Word Toast */}
+      <div className="pointer-events-none flex justify-center pb-2">
         {lastPopped && (
           <div
             key={lastPopped.id + poppedCount}
-            className="pointer-events-none absolute top-3 left-1/2 -translate-x-1/2 z-20 bg-white/95 border-4 border-saffron-400 rounded-full px-6 py-2 shadow-lg flex items-center gap-3 animate-pop"
+            className="bg-white/95 backdrop-blur border-4 border-saffron-400 rounded-full px-6 py-2 shadow-xl flex items-center gap-3 animate-pop"
           >
             <span className="font-kids text-2xl sm:text-3xl" style={{ color: lastPopped.accentHex }}>
               {lastPopped.darija}
@@ -288,51 +187,11 @@ export const BubblePopGame: React.FC<BubblePopGameProps> = ({
             )}
           </div>
         )}
-
-        {/* Floating Interactive Bubbles */}
-        {bubbles.map((b) => (
-          <button
-            key={b.uid}
-            type="button"
-            onPointerDown={(e) => {
-              e.preventDefault();
-              handleBubblePop(b);
-            }}
-            aria-label={`Pop ${b.word.english}`}
-            className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full flex items-center justify-center p-3 shadow-lg active:scale-125 transition-transform focus:outline-none cursor-pointer"
-            style={{
-              left: `${b.x}%`,
-              top: `${b.y}%`,
-              width: b.size,
-              height: b.size,
-              backgroundColor: b.tint,
-              border: '4px solid rgba(255, 255, 255, 0.95)',
-              boxShadow: 'inset -8px -8px 18px rgba(56,189,248,0.22), inset 8px 8px 16px rgba(255,255,255,0.9), 0 10px 20px rgba(14,116,144,0.14)',
-            }}
-          >
-            {/* Glossy Bubble Highlight */}
-            <span className="pointer-events-none absolute top-3 left-4 w-5 h-3 rounded-full bg-white/90 -rotate-30" />
-            <WordIllustration wordId={b.word.id} className="w-[84%] h-[84%] pointer-events-none" />
-          </button>
-        ))}
-
-        {/* Pop Sparkle Bursts */}
-        {bursts.map((burst) => (
-          <div
-            key={burst.id}
-            className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 z-30 flex items-center justify-center"
-            style={{ left: `${burst.x}%`, top: `${burst.y}%` }}
-          >
-            <span className="text-5xl animate-sparkle">💥</span>
-            <span className="text-3xl animate-sparkle absolute -top-6 -left-6">✨</span>
-            <span className="text-3xl animate-sparkle absolute -top-6 -right-6">⭐</span>
-          </div>
-        ))}
       </div>
 
       {finished && (
         <CelebrationModal
-          starsEarned={isLittle ? 2 : 3}
+          starsEarned={difficulty + 1}
           unlockedWord={unlockedSticker}
           showArabic={settings.showArabic}
           onPlayAgain={initGame}

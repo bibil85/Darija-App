@@ -1,6 +1,7 @@
 export enum CategoryType {
   ANIMALS = 'animals',
   FOOD = 'food',
+  VEHICLES = 'vehicles',
   FAMILY = 'family',
   HOME = 'home',
   NATURE = 'nature',
@@ -10,6 +11,7 @@ export enum CategoryType {
 }
 
 export type AgeMode = 'little' | 'big'; // little = Nora (2), big = Sophia (4)
+export type DifficultyLevel = 1 | 2 | 3; // 1 = Gentle (Nora), 2 = Explorer (Sophia), 3 = Champion
 
 export type AppView =
   | 'home'
@@ -49,12 +51,12 @@ export interface Word {
   category: CategoryType;
   bgHex: string;
   accentHex: string;
-  /** Optional playful sound cue for toddlers (e.g., "Meow!", "Beep beep!") */
   funCue?: string;
 }
 
 export interface ParentSettings {
   ageMode: AgeMode;
+  difficulty: DifficultyLevel;
   showArabic: boolean;
   showEnglish: boolean;
   soundEffects: boolean;
@@ -64,8 +66,8 @@ export interface ParentSettings {
 export interface PlacedSticker {
   uid: string;
   wordId: string;
-  x: number; // percentage 8..92
-  y: number; // percentage 14..86
+  x: number; // world-mapped percentage 8..92
+  y: number; // world-mapped percentage 14..86
   scale: number;
 }
 

@@ -9,6 +9,7 @@ const STORE_TTS_CACHE = 'tts_cache';
 
 export const DEFAULT_SETTINGS: ParentSettings = {
   ageMode: 'little',
+  difficulty: 1,
   showArabic: true,
   showEnglish: true,
   soundEffects: true,
