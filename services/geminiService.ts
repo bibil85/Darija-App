@@ -77,6 +77,14 @@ export async function playPCM(base64: string): Promise<void> {
   const ctx = getSharedAudioContext();
   if (!ctx) return;
 
+  if (ctx.state !== 'running') {
+    try {
+      await ctx.resume();
+    } catch {
+      // continue and attempt start
+    }
+  }
+
   fadeOutActivePCM(65);
 
   const binaryString = atob(base64);

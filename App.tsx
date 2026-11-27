@@ -30,7 +30,7 @@ import {
   saveProgress,
   saveSettings,
 } from './services/storageService.ts';
-import { speakShortPhrase, speakWord } from './services/audioService.ts';
+import { speakShortPhrase, speakWord, warmAudioCaches } from './services/audioService.ts';
 import {
   playClickSound,
   setSoundEffectsEnabled,
@@ -59,8 +59,9 @@ const App: React.FC = () => {
   const [progress, setProgress] = useState<ProgressData>(() => loadProgress());
   const [homeToast, setHomeToast] = useState<Word | null>(null);
 
-  // Install global iPad Safari gesture lockdown (suppress pinch-zoom, double-tap zoom, callouts)
+  // Install global iPad Safari gesture lockdown & preload audio caches into RAM for synchronous iOS speech!
   useEffect(() => {
+    void warmAudioCaches();
     return ToddlerUXGuard.installViewportLock();
   }, []);
 

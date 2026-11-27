@@ -30,37 +30,109 @@ class SoundFXEngineImpl {
 
   private sfxEnabled = true;
   private unlocked = false;
+  private htmlAudioPrimed = false;
   private listenersBound = false;
   private lastChimeMs = 0;
   private duckRestoreTimer: number | null = null;
+  private unlockCallbacks: Array<() => void> = [];
 
   constructor() {
+    this.configureIOSSession();
     this.bindLifecycleListeners();
   }
 
-  /** Bind one-time global unlock & iOS visibility recovery listeners */
+  /** Register an extra synchronous unlock hook (e.g. speechSynthesis primer) to run inside first user gesture */
+  onFirstUserGesture(cb: () => void) {
+    this.unlockCallbacks.push(cb);
+  }
+
+  /**
+   * iOS 17+ Safari AudioSession API:
+   * Sets type = 'playback' so Web Audio & Darija speech remain audible even when the iPad's
+   * Silent/Mute bell toggle is enabled in Control Center!
+   */
+  private configureIOSSession() {
+    if (typeof navigator === 'undefined') return;
+    try {
+      const nav = navigator as Navigator & { audioSession?: { type: string } };
+      if (nav.audioSession && nav.audioSession.type !== 'playback') {
+        nav.audioSession.type = 'playback';
+      }
+    } catch {
+      // Ignore on browsers without navigator.audioSession
+    }
+  }
+
+  /**
+   * Older iPadOS fallback for Silent Mode:
+   * Playing a tiny 0.05s silent inline WAV through <audio playsinline> switches WebKit's
+   * hardware audio session from 'ambient' (muted by Silent switch) to 'playback'!
+   */
+  private primeSilentHtmlAudio() {
+    if (this.htmlAudioPrimed || typeof document === 'undefined') return;
+    try {
+      // Minimal valid 1-sample silent PCM WAV data URI (44-byte header + 2-byte silent sample)
+      const silentWav =
+        'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+      const el = document.createElement('audio');
+      el.setAttribute('playsinline', '');
+      el.setAttribute('webkit-playsinline', '');
+      el.preload = 'auto';
+      el.src = silentWav;
+      const p = el.play();
+      if (p && typeof p.then === 'function') {
+        p.then(() => {
+          this.htmlAudioPrimed = true;
+        }).catch(() => {
+          // Will retry on next user gesture
+        });
+      } else {
+        this.htmlAudioPrimed = true;
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  /** Bind capturing global unlock & iOS visibility/interruption recovery listeners */
   private bindLifecycleListeners() {
     if (this.listenersBound || typeof window === 'undefined') return;
     this.listenersBound = true;
 
     const unlockHandler = () => {
       this.unlock();
+      if (this.unlockCallbacks.length > 0) {
+        for (const cb of this.unlockCallbacks) {
+          try {
+            cb();
+          } catch {
+            // ignore
+          }
+        }
+      }
     };
 
-    window.addEventListener('pointerdown', unlockHandler, { passive: true });
-    window.addEventListener('touchstart', unlockHandler, { passive: true });
-    window.addEventListener('keydown', unlockHandler, { passive: true });
+    // Capture phase guarantees stopPropagation() on child buttons never blocks audio unlock!
+    // Include touchend & click because iPadOS Safari strictly trusts touchend/click for WebAudio + Speech!
+    window.addEventListener('touchstart', unlockHandler, { capture: true, passive: true });
+    window.addEventListener('touchend', unlockHandler, { capture: true, passive: true });
+    window.addEventListener('pointerdown', unlockHandler, { capture: true, passive: true });
+    window.addEventListener('pointerup', unlockHandler, { capture: true, passive: true });
+    window.addEventListener('click', unlockHandler, { capture: true, passive: true });
+    window.addEventListener('keydown', unlockHandler, { capture: true, passive: true });
+
+    const resumeIfNeeded = () => {
+      this.configureIOSSession();
+      if (this.ctx && this.ctx.state !== 'running' && this.ctx.state !== 'closed') {
+        this.ctx.resume().catch(() => {});
+      }
+    };
 
     document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible' && this.ctx && this.ctx.state === 'suspended') {
-        this.ctx.resume().catch(() => {});
-      }
+      if (document.visibilityState === 'visible') resumeIfNeeded();
     });
-    window.addEventListener('focus', () => {
-      if (this.ctx && this.ctx.state === 'suspended') {
-        this.ctx.resume().catch(() => {});
-      }
-    });
+    window.addEventListener('focus', resumeIfNeeded);
+    window.addEventListener('pageshow', resumeIfNeeded);
   }
 
   /** Lazily initialize singleton AudioContext + DynamicsCompressor master bus */
@@ -73,8 +145,15 @@ class SoundFXEngineImpl {
         (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
       if (!AudioCtx) return null;
 
+      this.configureIOSSession();
       const ctx = new AudioCtx();
       this.ctx = ctx;
+      this.unlocked = ctx.state === 'running';
+
+      // Track Apple WebKit's 'interrupted' & 'suspended' transitions so we always re-unlock cleanly!
+      ctx.onstatechange = () => {
+        this.unlocked = ctx.state === 'running';
+      };
 
       // Audio graph: sfxInput -> duckGain -> DynamicsCompressor -> masterGain -> destination
       const sfxInput = ctx.createGain();
@@ -106,19 +185,27 @@ class SoundFXEngineImpl {
       this.buildNoiseBuffers(ctx);
     }
 
-    if (this.ctx.state === 'suspended') {
+    // Resume BOTH 'suspended' AND iPadOS WebKit's 'interrupted' state!
+    if (this.ctx.state !== 'running') {
       this.ctx.resume().catch(() => {});
     }
     return this.ctx;
   }
 
-  /** iOS Safari unlock: resume context and fire a silent 1-sample buffer */
+  /** iOS Safari unlock: configure playback session, resume suspended/interrupted context, and prime buffer */
   unlock() {
+    this.configureIOSSession();
+    this.primeSilentHtmlAudio();
+
     const ctx = this.getContext();
     if (!ctx) return;
 
-    if (ctx.state === 'suspended') {
-      ctx.resume().catch(() => {});
+    if (ctx.state !== 'running') {
+      ctx.resume()
+        .then(() => {
+          this.unlocked = ctx.state === 'running';
+        })
+        .catch(() => {});
     }
 
     if (!this.unlocked) {
@@ -128,11 +215,27 @@ class SoundFXEngineImpl {
         src.buffer = silent;
         src.connect(ctx.destination);
         src.start(0);
-        this.unlocked = true;
+        if (ctx.state === 'running') {
+          this.unlocked = true;
+        }
       } catch {
-        // Ignore if browser blocks pre-gesture playback
+        // Retry automatically on next user gesture
       }
     }
+  }
+
+  getDiagnostics() {
+    const nav =
+      typeof navigator !== 'undefined'
+        ? (navigator as Navigator & { audioSession?: { type: string } })
+        : null;
+    return {
+      state: this.ctx ? this.ctx.state : 'uninitialized',
+      sampleRate: this.ctx ? this.ctx.sampleRate : 0,
+      unlocked: this.unlocked,
+      sfxEnabled: this.sfxEnabled,
+      audioSessionType: nav?.audioSession?.type ?? 'unsupported',
+    };
   }
 
   /** Toggle SFX mute independently of Darija voice pronunciations */

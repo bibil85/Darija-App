@@ -10,8 +10,9 @@ import {
   saveParentRecording,
 } from '../services/storageService.ts';
 import { hasGeminiApiKey } from '../services/geminiService.ts';
-import { speakWord } from '../services/audioService.ts';
+import { getAudioDiagnostics, speakWord, warmAudioCaches } from '../services/audioService.ts';
 import { playClickSound, playSuccessSound } from '../services/soundService.ts';
+import { SoundFXEngine } from '../src/audio/SoundFXEngine.ts';
 
 interface ParentStudioProps {
   settings: ParentSettings;
@@ -34,6 +35,7 @@ export const ParentStudio: React.FC<ParentStudioProps> = ({
   const [recordingWordId, setRecordingWordId] = useState<string | null>(null);
   const [micError, setMicError] = useState<string | null>(null);
   const [statusMsg, setStatusMsg] = useState<string | null>(null);
+  const [diag, setDiag] = useState(() => getAudioDiagnostics());
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -95,7 +97,9 @@ export const ParentStudio: React.FC<ParentStudioProps> = ({
       recorder.onstop = async () => {
         stream.getTracks().forEach((t) => t.stop());
         streamRef.current = null;
-        const blob = new Blob(chunksRef.current, { type: recorder.mimeType || 'audio/webm' });
+        // Critical iPad Safari fix: releasing getUserMedia leaves AudioContext 'interrupted' — re-unlock now!
+        SoundFXEngine.unlock();
+        const blob = new Blob(chunksRef.current, { type: recorder.mimeType || 'audio/mp4' });
         if (blob.size > 0) {
           await saveParentRecording({
             wordId: word.id,
@@ -104,9 +108,11 @@ export const ParentStudio: React.FC<ParentStudioProps> = ({
             speakerLabel: settings.voiceLabel,
             updatedAt: Date.now(),
           });
+          await warmAudioCaches();
           playSuccessSound();
           setStatusMsg(`Saved ${settings.voiceLabel}'s voice for "${word.darija}"!`);
           await refreshCounts();
+          setDiag(getAudioDiagnostics());
         }
       };
 
@@ -121,15 +127,30 @@ export const ParentStudio: React.FC<ParentStudioProps> = ({
   const handleDeleteRecording = async (word: Word) => {
     playClickSound();
     await deleteParentRecording(word.id);
+    await warmAudioCaches();
     setStatusMsg(`Removed custom recording for "${word.darija}".`);
     await refreshCounts();
+    setDiag(getAudioDiagnostics());
   };
 
   const handleClearTTS = async () => {
     playClickSound();
     await clearTTSCache();
+    await warmAudioCaches();
     setStatusMsg('Cleared cached Gemini TTS audio.');
     await refreshCounts();
+    setDiag(getAudioDiagnostics());
+  };
+
+  const handleTestIPadAudio = async () => {
+    SoundFXEngine.unlock();
+    playSuccessSound();
+    const res = await speakWord(WORDS[0]);
+    const nextDiag = getAudioDiagnostics();
+    setDiag(nextDiag);
+    setStatusMsg(
+      `Audio test complete! Engine: ${nextDiag.state}, Voice: ${res.source} (${nextDiag.arabicVoiceName})`
+    );
   };
 
   const wordsInCat = WORDS.filter((w) => w.category === selectedCat);
@@ -137,7 +158,10 @@ export const ParentStudio: React.FC<ParentStudioProps> = ({
   const geminiEnabled = hasGeminiApiKey();
 
   return (
-    <div className="pointer-events-auto h-full overflow-y-auto bg-sand-50/95 backdrop-blur-md rounded-[2rem] border-4 border-white p-4 sm:p-5 flex flex-col gap-4 pb-6 shadow-2xl">
+    <div
+      className="pointer-events-auto h-full overflow-y-auto bg-sand-50/95 backdrop-blur-md rounded-[2rem] border-4 border-white p-4 sm:p-5 flex flex-col gap-4 pb-6 shadow-2xl"
+      style={{ touchAction: 'pan-y', WebkitOverflowScrolling: 'touch' }}
+    >
       {/* Header Banner */}
       <div className="bg-white border-4 border-slate-200 rounded-3xl p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3 shadow-sm">
         <div>
@@ -242,6 +266,19 @@ export const ParentStudio: React.FC<ParentStudioProps> = ({
               <span className="text-emerald-600">Instant iPad/Browser Speech Fallback:</span> Always ready offline
             </li>
           </ol>
+
+          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={handleTestIPadAudio}
+              className="px-3.5 py-2 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-kids text-xs sm:text-sm shadow-sm active:scale-95 transition-transform"
+            >
+              Test iPad Sound &amp; Voice
+            </button>
+            <span className="text-[11px] font-bold text-slate-500">
+              Engine: <strong className="text-slate-700">{diag.state}</strong> • Voices: {diag.voiceCount} • Session: {diag.audioSessionType}
+            </span>
+          </div>
 
           <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100">
             <span className="text-xs font-extrabold uppercase text-slate-500">Recording as:</span>

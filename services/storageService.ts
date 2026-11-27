@@ -139,6 +139,21 @@ export async function deleteParentRecording(wordId: string): Promise<boolean> {
   });
 }
 
+export async function getAllParentRecordings(): Promise<ParentRecording[]> {
+  const db = await openAudioDB();
+  if (!db) return [];
+  return new Promise((resolve) => {
+    try {
+      const tx = db.transaction(STORE_RECORDINGS, 'readonly');
+      const req = tx.objectStore(STORE_RECORDINGS).getAll();
+      req.onsuccess = () => resolve((req.result as ParentRecording[]) || []);
+      req.onerror = () => resolve([]);
+    } catch {
+      resolve([]);
+    }
+  });
+}
+
 export async function listParentRecordingIds(): Promise<Record<string, string>> {
   const db = await openAudioDB();
   if (!db) return {};
@@ -189,6 +204,28 @@ export async function saveCachedTTS(wordId: string, base64: string): Promise<voi
       tx.onerror = () => resolve();
     } catch {
       resolve();
+    }
+  });
+}
+
+export async function getAllCachedTTS(): Promise<Record<string, string>> {
+  const db = await openAudioDB();
+  if (!db) return {};
+  return new Promise((resolve) => {
+    try {
+      const tx = db.transaction(STORE_TTS_CACHE, 'readonly');
+      const req = tx.objectStore(STORE_TTS_CACHE).getAll();
+      req.onsuccess = () => {
+        const out: Record<string, string> = {};
+        const rows = (req.result as Array<{ wordId: string; base64?: string }>) || [];
+        for (const r of rows) {
+          if (r.wordId && r.base64) out[r.wordId] = r.base64;
+        }
+        resolve(out);
+      };
+      req.onerror = () => resolve({});
+    } catch {
+      resolve({});
     }
   });
 }
